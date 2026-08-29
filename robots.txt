@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /g/
+Disallow: /a/
+Disallow: /api/
+
+Sitemap: https://loamskg.gr/sitemap.xml

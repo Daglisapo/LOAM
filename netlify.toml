@@ -1,0 +1,47 @@
+[build]
+  publish = "."
+  command = "npm install --omit=dev && node build.mjs"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# --- Owner calendar: same treatment as the guest guide -------------------
+[[headers]]
+  for = "/a/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive, nosnippet, noimageindex"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "private, no-store"
+
+# --- Calendar API -------------------------------------------------------
+# The availability feed is public (the site draws it); blocks and the .ics
+# are guarded by ADMIN_PASSWORD inside the function itself.
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Referrer-Policy = "no-referrer"
+
+# --- Guest guide: reachable only by the secret link ---------------------
+# robots.txt already disallows /g/, but a Disallow is only a request.
+# The header below is what actually keeps the page out of search results,
+# and it also stops the referrer leaking the slug to outside sites.
+[[headers]]
+  for = "/g/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive, nosnippet, noimageindex"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "private, no-store"
+
+# --- Static assets: hashed by content, safe to cache hard ---------------
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"

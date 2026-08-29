@@ -1,0 +1,9 @@
+node_modules/
+
+# Generated at deploy time by build.mjs from src/, at paths named by
+# GUEST_SLUG and ADMIN_SLUG. Those URLs are the only thing protecting the
+# guest guide and the owner calendar, so they never enter version control.
+/g/
+/a/
+
+.netlify/

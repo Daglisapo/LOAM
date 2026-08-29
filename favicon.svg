@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <rect width="120" height="120" rx="22" fill="#241E17"/>
+  <g transform="translate(0,17)">
+    <path d="M8 90 V44 a52 52 0 0 1 104 0 V90 h-14 V44 a38 38 0 0 0 -76 0 V90 Z" fill="#C9B79B"/>
+    <path d="M24 90 V44 a36 36 0 0 1 72 0 V90 h-13 V44 a23 23 0 0 0 -46 0 V90 Z" fill="#B4915F"/>
+    <path d="M40 90 V45 a20 20 0 0 1 40 0 V90 h-12 V45 a8 8 0 0 0 -16 0 V90 Z" fill="#9C7A22"/>
+    <path d="M53 90 V46 a7 7 0 0 1 14 0 V90 Z" fill="#F3EBDA"/>
+  </g>
+</svg>

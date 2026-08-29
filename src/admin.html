@@ -1,0 +1,536 @@
+<!DOCTYPE html><html lang="el"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#241E17">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta name="referrer" content="no-referrer">
+<title>LOAM · Ημερολόγιο</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Commissioner:wght@400;500;600&display=swap');
+:root{--paper:#F6F0E4;--ink:#241E17;--ink2:#4A4034;--mut:#8A7C68;--line:#E0D5C1;--ochre:#9C7A22;--card:#FCF8F0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Commissioner',system-ui,sans-serif;line-height:1.55;padding:18px}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;margin-bottom:2px}
+.sub{color:var(--mut);font-size:13.5px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h2{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;margin-bottom:12px}
+label{display:block;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:5px}
+input,button{font:inherit;font-size:15px}
+input{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%;color:var(--ink)}
+input:focus{outline:none;border-color:var(--ochre)}
+button{background:var(--ink);color:var(--paper);border:0;border-radius:999px;padding:10px 20px;cursor:pointer}
+button:hover:not(:disabled){background:var(--ochre)}
+button:disabled{opacity:.45;cursor:default}
+button.ghost{background:none;color:var(--mut);border:1px solid var(--line);padding:6px 12px;font-size:13px}
+button.ghost:hover{background:#fff;color:#B44;border-color:#D9A0A0}
+.row{display:grid;grid-template-columns:1fr 1fr 1.4fr auto;gap:10px;align-items:end}
+@media(max-width:680px){.row{grid-template-columns:1fr 1fr}.row .wide{grid-column:1/-1}}
+
+/* month grid */
+.g div[data-d]{cursor:pointer;flex-direction:column;gap:0;line-height:1.05;user-select:none;-webkit-user-select:none}
+.g div[data-d] .n{font-size:12px}
+.g div[data-d] .pr{font-size:8.5px;color:var(--mut);letter-spacing:-.02em}
+.g div.past{cursor:default}
+.g div.sel{outline:2px solid var(--ink);outline-offset:-2px;background:#EFE3C8;border-color:var(--ochre)}
+.g div.sel .pr{color:#6E5F45}
+.selbar{position:sticky;bottom:0;z-index:20;margin-top:16px;background:var(--ink);color:#F6F0E4;
+  border-radius:14px;padding:14px 16px;display:none;gap:12px;align-items:center;flex-wrap:wrap;
+  box-shadow:0 6px 24px rgba(36,30,23,.28)}
+.selbar.on{display:flex}
+.selbar .rng{font-size:15px;font-weight:600}
+.selbar .sub{font-size:12.5px;color:#B7A886}
+.selbar input{width:110px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.22);
+  border-radius:9px;color:#F6F0E4;font:inherit;font-size:15px;padding:9px 11px}
+.selbar .spacer{flex:1}
+.selbar button{border-radius:999px;padding:9px 16px;font-size:14px}
+.selbar button.ghost{background:transparent;border:1px solid rgba(255,255,255,.35);color:#F6F0E4}
+.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.mo h3{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;margin-bottom:8px;text-align:center}
+.g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.g div{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12px;border-radius:6px;background:#fff;border:1px solid var(--line)}
+.g div.w{aspect-ratio:auto;background:none;border:0;color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.g div.out{background:none;border:0}
+.g div.past{background:#F1EADC;color:#B9AE9A;border-color:#EBE2D0}
+.g div.today{outline:2px solid var(--ochre);outline-offset:-2px;font-weight:600}
+.g div.airbnb{background:#F2C8C8;border-color:#E5A9A9}
+.g div.booking{background:#C6D4EE;border-color:#A6BBE2}
+.g div.direct{background:#D6E7C8;border-color:#B5D2A0}
+.g div.multi{background:repeating-linear-gradient(45deg,#F2C8C8,#F2C8C8 5px,#C6D4EE 5px,#C6D4EE 10px)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:14px 0 4px;font-size:12.5px;color:var(--ink2)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:13px;height:13px;border-radius:4px;display:block;border:1px solid rgba(0,0,0,.12)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.msg{margin-top:12px;font-size:14px;padding:10px 12px;border-radius:9px;display:none}
+.msg.on{display:block}
+.msg.err{background:#F7E4E4;border:1px solid #E0AEAE;color:#8A3A3A}
+.msg.ok{background:#E8F0DF;border:1px solid #B9D3A2;color:#3F5F2C}
+.src{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin-top:8px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+code{background:#F0E8D8;padding:2px 6px;border-radius:5px;font-size:12.5px;word-break:break-all}
+.muted{color:var(--mut);font-size:12.5px;margin-top:8px}
+#gate{max-width:360px;margin:60px auto}
+</style></head><body>
+
+<div class="wrap">
+
+  <div id="gate" class="card">
+    <h2>LOAM · Ημερολόγιο</h2>
+    <label for="key">Κωδικός</label>
+    <input id="key" type="password" autocomplete="current-password">
+    <div style="margin-top:12px"><button id="enter">Είσοδος</button></div>
+    <div class="msg err" id="gatemsg"></div>
+  </div>
+
+  <div id="app" hidden>
+    <h1>Ημερολόγιο κρατήσεων</h1>
+    <div class="sub" id="status">Φόρτωση…</div>
+
+    <div class="card">
+      <h2>Επόμενοι 6 μήνες</h2>
+      <div class="legend">
+        <span><i style="background:#F2C8C8;border-color:#E5A9A9"></i>Airbnb</span>
+        <span><i style="background:#C6D4EE;border-color:#A6BBE2"></i>Booking.com</span>
+        <span><i style="background:#D6E7C8;border-color:#B5D2A0"></i>Απευθείας</span>
+        <span><i style="background:#fff"></i>Ελεύθερο</span>
+      </div>
+      <div class="months" id="months"></div>
+      <div class="selbar" id="selbar">
+        <div>
+          <div class="rng" id="selrng"></div>
+          <div class="sub" id="selsub"></div>
+        </div>
+        <div class="spacer"></div>
+        <input id="selprice" type="number" min="1" step="1" placeholder="€ / νύχτα">
+        <button id="selapply">Εφαρμογή τιμής</button>
+        <button id="selclear" class="ghost">Άκυρο</button>
+        <div class="msg" id="selmsg" style="flex-basis:100%"></div>
+      </div>
+      <div class="src" id="src"></div>
+    </div>
+
+    <div class="card">
+      <h2>Κλείσιμο ημερομηνιών</h2>
+      <p class="muted" style="margin-top:-4px;margin-bottom:12px">
+        Για απευθείας κρατήσεις ή συντήρηση. Ό,τι κλείνεις εδώ βγαίνει στο feed που διαβάζουν Airbnb και Booking.
+      </p>
+      <div class="row">
+        <div><label for="s">Από (άφιξη)</label><input id="s" type="date"></div>
+        <div><label for="e">Έως (αναχώρηση)</label><input id="e" type="date"></div>
+        <div class="wide"><label for="n">Σημείωση</label><input id="n" type="text" placeholder="π.χ. Μαρία, 2 άτομα"></div>
+        <div><button id="add">Κλείσιμο</button></div>
+      </div>
+      <div class="msg" id="addmsg"></div>
+    </div>
+
+    <div class="card">
+      <h2>Κλεισμένα απευθείας</h2>
+      <table><thead><tr><th>Άφιξη</th><th>Αναχώρηση</th><th>Νύχτες</th><th>Σημείωση</th><th></th></tr></thead>
+      <tbody id="rows"></tbody></table>
+      <div class="muted" id="empty" hidden>Καμία απευθείας κράτηση ακόμα.</div>
+    </div>
+
+    <div class="card">
+      <h2>Τιμές</h2>
+      <p class="muted" style="margin-top:-4px;margin-bottom:12px">
+        Καθαρά έσοδα ανά νύχτα για απευθείας κρατήσεις — χωρίς προμήθεια πλατφόρμας.
+      </p>
+      <div class="row">
+        <div><label for="rbase">Βασική τιμή / νύχτα (€)</label><input id="rbase" type="number" min="1" step="1"></div>
+        <div><label for="rincl">Περιλαμβάνει έως</label><input id="rincl" type="number" min="1" max="20" step="1"></div>
+        <div><label for="rextra">Επιπλέον άτομο (€)</label><input id="rextra" type="number" min="0" step="1"></div>
+        <div><label for="rmax">Μέγιστα άτομα</label><input id="rmax" type="number" min="1" max="20" step="1"></div>
+      </div>
+      <div style="margin-top:12px"><button id="rsave">Αποθήκευση</button></div>
+      <div class="msg" id="rmsg"></div>
+    </div>
+
+    <div class="card">
+      <h2>Εποχικές περίοδοι</h2>
+      <p class="muted" style="margin-top:-4px;margin-bottom:12px">
+        Διαφορετική τιμή σε συγκεκριμένες ημερομηνίες. Η «έως» είναι η <b>τελευταία νύχτα</b> που χρεώνεται με τη νέα τιμή.
+      </p>
+      <div class="row">
+        <div><label for="ps">Από</label><input id="ps" type="date"></div>
+        <div><label for="pe">Έως (τελευταία νύχτα)</label><input id="pe" type="date"></div>
+        <div><label for="pp">Τιμή / νύχτα (€)</label><input id="pp" type="number" min="1" step="1"></div>
+        <div class="wide"><label for="pl">Όνομα</label><input id="pl" type="text" placeholder="π.χ. Αρχές Σεπτεμβρίου"></div>
+        <div><button id="padd">Προσθήκη</button></div>
+      </div>
+      <div class="msg" id="pmsg"></div>
+      <table style="margin-top:14px"><thead><tr><th>Από</th><th>Τελευταία νύχτα</th><th>Τιμή</th><th>Όνομα</th><th></th></tr></thead>
+      <tbody id="prows"></tbody></table>
+      <div class="muted" id="pempty" hidden>Καμία εποχική περίοδος — ισχύει παντού η βασική τιμή.</div>
+    </div>
+
+    <div class="card">
+      <h2>Feed για Airbnb &amp; Booking</h2>
+      <p class="muted" style="margin-top:-4px">Αντίγραψέ το και κάν' το import στις δύο πλατφόρμες, ώστε οι απευθείας κρατήσεις να κλείνουν και εκεί.</p>
+      <p style="margin-top:10px"><code id="icsurl"></code></p>
+    </div>
+  </div>
+</div>
+
+<script>
+var KEY = null;
+var STORE = "loam_admin_key";
+
+function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function addDays(s,n){ var d=new Date(s+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function nights(a,b){ return Math.round((Date.parse(b)-Date.parse(a))/86400000); }
+function msg(el,cls,text){ el.className = "msg on "+cls; el.textContent = text; }
+function clear(el){ el.className = "msg"; el.textContent = ""; }
+
+function api(path, opts){
+  opts = opts || {};
+  var h = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+  if (KEY) h["x-loam-key"] = KEY;   // never send the literal string "null"
+  opts.headers = h;
+  return fetch(path, opts).then(function(r){
+    return r.json().then(function(j){ return { ok: r.ok, status: r.status, body: j }; });
+  });
+}
+
+/* ---- gate ---- */
+/* The key travels in a header, never in the URL — query strings end up in
+   browser history, referrers and server logs. */
+function unlock(k){
+  var prev = KEY;
+  KEY = k;
+  return api("/api/blocks").then(function(res){
+    if (!res.ok) { KEY = prev; return false; }
+    try { sessionStorage.setItem(STORE, k); } catch(e){}
+    document.getElementById("gate").hidden = true;
+    document.getElementById("app").hidden = false;
+    document.getElementById("icsurl").textContent = location.origin + "/api/calendar.ics";
+    loadRates();
+    return true;
+  });
+}
+
+document.getElementById("enter").addEventListener("click", function(){
+  var k = document.getElementById("key").value.trim();
+  if (!k) return;
+  unlock(k).then(function(ok){
+    if (ok) load();
+    else msg(document.getElementById("gatemsg"), "err", "Λάθος κωδικός.");
+  });
+});
+document.getElementById("key").addEventListener("keydown", function(e){
+  if (e.key === "Enter") document.getElementById("enter").click();
+});
+
+/* ---- data ---- */
+var BY = { airbnb: new Set(), booking: new Set(), direct: new Set() };
+var PRICES = {};
+var SEL = { a: null, b: null, dragging: false };
+
+function load(){
+  Promise.all([
+    fetch("/api/availability?refresh=1").then(function(r){ return r.json(); }),
+    api("/api/blocks")
+  ]).then(function(r){
+    var av = r[0], bl = r[1].body;
+    BY.airbnb  = new Set(av.bySource.airbnb  || []);
+    BY.booking = new Set(av.bySource.booking || []);
+    BY.direct  = new Set(av.bySource.direct  || []);
+    PRICES = av.prices || {};
+    drawMonths();
+    drawSources(av);
+    drawRows(bl.blocks || []);
+    document.getElementById("status").textContent =
+      "Ενημερώθηκε " + (av.updatedAt ? new Date(av.updatedAt).toLocaleString("el-GR") : "—");
+  });
+}
+
+function drawSources(av){
+  var el = document.getElementById("src");
+  el.innerHTML = "";
+  ["airbnb","booking"].forEach(function(k){
+    var s = (av.sources && av.sources[k]) || {};
+    var d = document.createElement("div");
+    var colour = s.ok ? "#4B7F3A" : "#B45050";
+    d.innerHTML = '<span class="dot" style="background:'+colour+'"></span>' +
+      (k === "airbnb" ? "Airbnb" : "Booking.com") + ": " +
+      (s.ok ? (s.events + " καταχωρήσεις") : (s.error || "μη ρυθμισμένο"));
+    el.appendChild(d);
+  });
+}
+
+function drawMonths(){
+  var host = document.getElementById("months");
+  host.innerHTML = "";
+  var today = iso(new Date());
+  var base = new Date(); base.setDate(1);
+
+  for (var m = 0; m < 6; m++){
+    var first = new Date(base.getFullYear(), base.getMonth() + m, 1);
+    var box = document.createElement("div"); box.className = "mo";
+    var h = document.createElement("h3");
+    h.textContent = first.toLocaleDateString("el-GR", { month: "long", year: "numeric" });
+    box.appendChild(h);
+
+    var g = document.createElement("div"); g.className = "g";
+    ["Δε","Τρ","Τε","Πε","Πα","Σα","Κυ"].forEach(function(w){
+      var c = document.createElement("div"); c.className = "w"; c.textContent = w; g.appendChild(c);
+    });
+    var lead = (first.getDay() + 6) % 7;
+    for (var p = 0; p < lead; p++){ var o = document.createElement("div"); o.className = "out"; g.appendChild(o); }
+
+    var days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    for (var d = 1; d <= days; d++){
+      var key = iso(new Date(first.getFullYear(), first.getMonth(), d));
+      var cls = [];
+      if (key < today) cls.push("past");
+      if (key === today) cls.push("today");
+      var hits = ["airbnb","booking","direct"].filter(function(s){ return BY[s].has(key); });
+      if (hits.length > 1) cls.push("multi");
+      else if (hits.length === 1) cls.push(hits[0]);
+      var cell = document.createElement("div");
+      cell.className = cls.join(" ");
+      if (key >= today) cell.dataset.d = key;
+      var n = document.createElement("span"); n.className = "n"; n.textContent = d;
+      cell.appendChild(n);
+      if (PRICES[key] != null){
+        var pr = document.createElement("span"); pr.className = "pr";
+        pr.textContent = PRICES[key] + "€";
+        cell.appendChild(pr);
+      }
+      if (hits.length) cell.title = hits.join(" + ");
+      g.appendChild(cell);
+    }
+    box.appendChild(g);
+    host.appendChild(box);
+  }
+}
+
+function drawRows(blocks){
+  var tb = document.getElementById("rows");
+  tb.innerHTML = "";
+  document.getElementById("empty").hidden = blocks.length > 0;
+  blocks.forEach(function(b){
+    var tr = document.createElement("tr");
+    [b.start, b.end, nights(b.start, b.end), b.note || "—"].forEach(function(v){
+      var td = document.createElement("td"); td.textContent = v; tr.appendChild(td);
+    });
+    var td = document.createElement("td");
+    var btn = document.createElement("button");
+    btn.className = "ghost"; btn.textContent = "Άνοιγμα";
+    btn.addEventListener("click", function(){
+      if (!confirm("Να ανοίξουν ξανά οι ημερομηνίες " + b.start + " → " + b.end + ";")) return;
+      btn.disabled = true;
+      api("/api/blocks", { method: "POST", body: JSON.stringify({ remove: b.id }) })
+        .then(function(){ load(); });
+    });
+    td.appendChild(btn); tr.appendChild(td);
+    tb.appendChild(tr);
+  });
+}
+
+/* ---- add ---- */
+document.getElementById("add").addEventListener("click", function(){
+  var s = document.getElementById("s").value;
+  var e = document.getElementById("e").value;
+  var n = document.getElementById("n").value;
+  var box = document.getElementById("addmsg");
+  clear(box);
+  if (!s || !e) return msg(box, "err", "Συμπλήρωσε και τις δύο ημερομηνίες.");
+  if (e <= s)   return msg(box, "err", "Η αναχώρηση πρέπει να είναι μετά την άφιξη.");
+
+  var btn = this; btn.disabled = true;
+  api("/api/blocks", { method: "POST", body: JSON.stringify({ start: s, end: e, note: n }) })
+    .then(function(res){
+      btn.disabled = false;
+      if (!res.ok) return msg(box, "err", res.body.error || "Σφάλμα.");
+      msg(box, "ok", "Κλείστηκε " + s + " → " + e + " (" + nights(s,e) + " νύχτες).");
+      document.getElementById("n").value = "";
+      load();
+    });
+});
+
+/* ---- rates ----
+   The API stores an exclusive end date, the way iCalendar does. The form asks
+   for the last charged night instead, because that is how a host thinks about a
+   season. Convert on the way in and on the way out. */
+var RATES = null;
+
+function loadRates(){
+  return api("/api/rates").then(function(res){
+    if (!res.ok) return;
+    RATES = res.body;
+    document.getElementById("rbase").value  = RATES.base;
+    document.getElementById("rincl").value  = RATES.includedGuests;
+    document.getElementById("rextra").value = RATES.extraGuest;
+    document.getElementById("rmax").value   = RATES.maxGuests;
+    drawPeriods(RATES.periods || []);
+  });
+}
+
+function drawPeriods(list){
+  var tb = document.getElementById("prows");
+  tb.innerHTML = "";
+  document.getElementById("pempty").hidden = list.length > 0;
+  list.forEach(function(p){
+    var tr = document.createElement("tr");
+    [p.start, addDays(p.end, -1), p.price + " €", p.label || "—"].forEach(function(v){
+      var td = document.createElement("td"); td.textContent = v; tr.appendChild(td);
+    });
+    var td = document.createElement("td");
+    var btn = document.createElement("button");
+    btn.className = "ghost"; btn.textContent = "Διαγραφή";
+    btn.addEventListener("click", function(){
+      if (!confirm("Να διαγραφεί η περίοδος " + p.start + " → " + addDays(p.end, -1) + ";")) return;
+      btn.disabled = true;
+      api("/api/rates", { method: "POST", body: JSON.stringify({ remove: p.id }) })
+        .then(function(){ loadRates(); load(); });
+    });
+    td.appendChild(btn); tr.appendChild(td);
+    tb.appendChild(tr);
+  });
+}
+
+document.getElementById("rsave").addEventListener("click", function(){
+  var box = document.getElementById("rmsg"); clear(box);
+  var btn = this; btn.disabled = true;
+  api("/api/rates", { method: "POST", body: JSON.stringify({
+    base: +document.getElementById("rbase").value,
+    includedGuests: +document.getElementById("rincl").value,
+    extraGuest: +document.getElementById("rextra").value,
+    maxGuests: +document.getElementById("rmax").value
+  })}).then(function(res){
+    btn.disabled = false;
+    if (!res.ok) return msg(box, "err", res.body.error || "Σφάλμα.");
+    msg(box, "ok", "Αποθηκεύτηκε.");
+    RATES = res.body.rates; load();
+  });
+});
+
+document.getElementById("padd").addEventListener("click", function(){
+  var box = document.getElementById("pmsg"); clear(box);
+  var s = document.getElementById("ps").value;
+  var lastNight = document.getElementById("pe").value;
+  var price = document.getElementById("pp").value;
+  if (!s || !lastNight) return msg(box, "err", "Συμπλήρωσε και τις δύο ημερομηνίες.");
+  if (lastNight < s)    return msg(box, "err", "Η τελευταία νύχτα δεν μπορεί να είναι πριν την πρώτη.");
+  if (!price)           return msg(box, "err", "Βάλε τιμή.");
+
+  var btn = this; btn.disabled = true;
+  api("/api/rates", { method: "POST", body: JSON.stringify({ period: {
+    start: s, end: addDays(lastNight, 1), price: +price,
+    label: document.getElementById("pl").value
+  }})}).then(function(res){
+    btn.disabled = false;
+    if (!res.ok) return msg(box, "err", res.body.error || "Σφάλμα.");
+    msg(box, "ok", "Προστέθηκε: " + s + " → " + lastNight + " στα " + price + " €.");
+    document.getElementById("pl").value = "";
+    RATES = res.body.rates; drawPeriods(RATES.periods || []); load();
+  });
+});
+
+
+/* ---- drag a range straight on the calendar, then price it ----
+   The seasonal-period form still exists, but nobody wants to type two dates to
+   change a weekend. Pointer events cover mouse and touch with one path. */
+function selRange(){
+  if (!SEL.a || !SEL.b) return null;
+  return SEL.a <= SEL.b ? { from: SEL.a, to: SEL.b } : { from: SEL.b, to: SEL.a };
+}
+
+function paintSel(){
+  var r = selRange();
+  document.querySelectorAll("#months .g div[data-d]").forEach(function(c){
+    var d = c.dataset.d;
+    c.classList.toggle("sel", !!r && d >= r.from && d <= r.to);
+  });
+  var bar = document.getElementById("selbar");
+  if (!r){ bar.className = "selbar"; return; }
+
+  var nights = 0;
+  for (var d = r.from; d <= r.to; d = addDays(d, 1)) nights++;
+  var fmt = function(x){
+    var p = x.split("-");
+    return new Date(+p[0], +p[1]-1, +p[2]).toLocaleDateString("el-GR", { day:"numeric", month:"short" });
+  };
+  document.getElementById("selrng").textContent =
+    nights === 1 ? fmt(r.from) : fmt(r.from) + " → " + fmt(r.to);
+
+  // show what these nights cost now, so a change is a comparison not a guess
+  var seen = [];
+  for (var q = r.from; q <= r.to; q = addDays(q, 1)){
+    var p = PRICES[q];
+    if (p != null && seen.indexOf(p) < 0) seen.push(p);
+  }
+  seen.sort(function(a,b){ return a-b; });
+  var now = seen.length === 0 ? "μη κρατήσιμες"
+          : seen.length === 1 ? ("τώρα " + seen[0] + "€")
+          : ("τώρα " + seen[0] + "–" + seen[seen.length-1] + "€");
+  document.getElementById("selsub").textContent =
+    nights + (nights === 1 ? " νύχτα · " : " νύχτες · ") + now;
+
+  if (seen.length === 1) document.getElementById("selprice").placeholder = seen[0] + " €";
+  bar.className = "selbar on";
+}
+
+function clearSel(){ SEL.a = SEL.b = null; paintSel(); clear(document.getElementById("selmsg")); }
+
+document.getElementById("months").addEventListener("pointerdown", function(e){
+  var c = e.target.closest("div[data-d]");
+  if (!c) return;
+  e.preventDefault();
+  SEL.a = SEL.b = c.dataset.d;
+  SEL.dragging = true;
+  paintSel();
+});
+document.getElementById("months").addEventListener("pointerover", function(e){
+  if (!SEL.dragging) return;
+  var c = e.target.closest("div[data-d]");
+  if (!c) return;
+  SEL.b = c.dataset.d;
+  paintSel();
+});
+document.addEventListener("pointerup", function(){ SEL.dragging = false; });
+
+document.getElementById("selclear").addEventListener("click", clearSel);
+
+document.getElementById("selapply").addEventListener("click", function(){
+  var box = document.getElementById("selmsg"); clear(box);
+  var r = selRange();
+  if (!r) return;
+  var price = document.getElementById("selprice").value;
+  if (!price) return msg(box, "err", "Βάλε τιμή ανά νύχτα.");
+
+  var btn = this; btn.disabled = true;
+  // the API stores an exclusive end, the picker works in last-night terms
+  api("/api/rates", { method: "POST", body: JSON.stringify({ period: {
+    start: r.from, end: addDays(r.to, 1), price: +price, label: "Από ημερολόγιο"
+  }})}).then(function(res){
+    btn.disabled = false;
+    if (!res.ok) return msg(box, "err", res.body.error || "Σφάλμα.");
+    msg(box, "ok", "Εφαρμόστηκε " + price + "€ σε " + r.from + " → " + r.to + ".");
+    document.getElementById("selprice").value = "";
+    RATES = res.body.rates; drawPeriods(RATES.periods || []);
+    load();
+    setTimeout(clearSel, 1200);
+  });
+});
+
+/* min dates */
+(function(){
+  var t = iso(new Date());
+  document.getElementById("s").min = t;
+  document.getElementById("e").min = t;
+  document.getElementById("s").addEventListener("change", function(){
+    document.getElementById("e").min = addDays(this.value || t, 1);
+  });
+})();
+
+/* resume a session */
+(function(){
+  var k = null;
+  try { k = sessionStorage.getItem(STORE); } catch(e){}
+  if (k) unlock(k).then(function(ok){ if (ok) load(); });
+})();
+</script>
+</body></html>

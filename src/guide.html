@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#241E17">
+<title>Welcome — LOAM · Thessaloniki</title>
+<meta name="description" content="LOAM guest guide — everything you need for your stay in central Thessaloniki.">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta name="referrer" content="no-referrer">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Commissioner:wght@400;500;600;700&display=swap');
+
+:root{
+  --paper:#F3EBDA; --card:#FBF6EC; --ink:#241E17;
+  --ochre:#9C7A22; --gold:#C9A85E; --tan:#B4915F;
+  --line:#E4D8BF; --mut:#8A7F6B;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+  font-family:'Commissioner',ui-sans-serif,system-ui,sans-serif;
+  -webkit-text-size-adjust:100%;line-height:1.5}
+.wrap{max-width:680px;margin:0 auto}
+.px{padding-left:18px;padding-right:18px}
+
+/* Masthead */
+.mast{background:var(--ink);color:#F3EDE1;padding:18px 18px 0}
+.toprow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.kicker{font-size:10.5px;letter-spacing:.16em;color:var(--gold);font-weight:600}
+.langs{display:flex;gap:5px}
+.langs button{appearance:none;border:1px solid #5A4E3C;background:none;color:#C3B79E;
+  font:inherit;font-weight:700;font-size:11.5px;padding:4px 8px;border-radius:999px;cursor:pointer}
+.langs button.on{background:var(--gold);border-color:var(--gold);color:#241E17}
+.brand{display:flex;align-items:center;gap:12px;margin:14px 0 2px}
+.logomark{width:38px;height:44px;background:#F3EBDA;border-radius:8px 8px 6px 6px;
+  display:flex;align-items:flex-end;justify-content:center;flex:0 0 auto;padding:5px 5px 0;overflow:hidden}
+.logomark svg{width:100%;height:auto;display:block}
+.wordmark{font-family:'Playfair Display',Georgia,serif;font-weight:600;
+  font-size:30px;letter-spacing:.22em;color:#FBF6EC;padding-left:.22em}
+.mast h1{font-family:'Playfair Display',Georgia,serif;font-weight:600;
+  font-size:22px;margin:8px 0 3px;color:#FDFBF6}
+.sub{font-size:13px;color:#C3B79E;padding-bottom:13px;
+  border-bottom:1px solid rgba(243,237,225,.16)}
+nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{appearance:none;background:none;border:none;color:#B7AE9B;font:inherit;
+  font-weight:600;font-size:13.5px;padding:13px 11px;cursor:pointer;
+  border-bottom:3px solid transparent;white-space:nowrap}
+nav button.on{color:#FDFBF6;border-bottom-color:var(--gold)}
+
+/* Content */
+main{padding-top:18px;padding-bottom:26px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:15px 16px;margin-bottom:13px;box-shadow:0 1px 2px rgba(36,30,23,.03)}
+.ct{font-family:'Playfair Display',Georgia,serif;font-weight:600;font-size:16.5px;
+  color:var(--ochre);margin-bottom:7px;display:flex;align-items:center;gap:9px}
+.ic{font-size:17px;line-height:1}
+.card p{margin:6px 0;font-size:14px}
+.card p b{color:var(--ink)}
+.foot{text-align:center;color:var(--mut);font-size:13px;font-style:italic;padding:14px 0 6px}
+.footmark{text-align:center;font-family:'Playfair Display',serif;letter-spacing:.2em;
+  color:var(--tan);font-size:14px;padding-bottom:22px}
+.vwrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;margin:9px 0 4px;background:#000}
+.vwrap.portrait{aspect-ratio:9/16;max-width:300px;margin-left:auto;margin-right:auto}
+.vwrap video{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain;background:#000}
+.vplay{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;cursor:pointer;
+  background:rgba(36,30,23,.22);display:flex;align-items:center;justify-content:center;transition:background .2s}
+.vplay:hover{background:rgba(36,30,23,.34)}
+.vplay span{width:62px;height:62px;border-radius:50%;background:rgba(251,246,236,.94);
+  box-shadow:0 3px 14px rgba(0,0,0,.4);position:relative;display:block}
+.vplay span:after{content:"";position:absolute;top:50%;left:50%;transform:translate(-38%,-50%);
+  border-left:20px solid var(--ink);border-top:13px solid transparent;border-bottom:13px solid transparent}
+.vph{margin:9px 0 4px;border:1.5px dashed var(--tan);background:#F3EBDA;color:var(--mut);border-radius:12px;padding:30px 14px;text-align:center;font-size:13px;font-weight:600}
+</style>
+</head>
+<body>
+<header class="mast px">
+  <div class="wrap">
+    <div class="toprow">
+      <span class="kicker">ROTONDA · KAMARA · THESSALONIKI</span>
+      <div class="langs" id="langs"></div>
+    </div>
+    <div class="brand">
+      <span class="logomark" aria-hidden="true">
+        <svg viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 90 V44 a52 52 0 0 1 104 0 V90 h-14 V44 a38 38 0 0 0 -76 0 V90 Z" fill="#C9B79B"/>
+          <path d="M24 90 V44 a36 36 0 0 1 72 0 V90 h-13 V44 a23 23 0 0 0 -46 0 V90 Z" fill="#B4915F"/>
+          <path d="M40 90 V45 a20 20 0 0 1 40 0 V90 h-12 V45 a8 8 0 0 0 -16 0 V90 Z" fill="#9C7A22"/>
+          <path d="M53 90 V46 a7 7 0 0 1 14 0 V90 Z" fill="#241E17"/>
+        </svg>
+      </span>
+      <span class="wordmark">LOAM</span>
+    </div>
+    <h1 id="h1"></h1>
+    <div class="sub" id="sub"></div>
+    <nav id="nav"></nav>
+  </div>
+</header>
+
+<main class="wrap px" id="main"></main>
+
+<script>
+/* lang index: 0=EL 1=EN 2=DE 3=FR 4=IT */
+var LANGS=["ΕΛ","EN","DE","FR","IT"];
+
+var TABS=[
+  ["arrive",["Άφιξη","Arrival","Ankunft","Arrivée","Arrivo"]],
+  ["house",["Το σπίτι","The flat","Wohnung","Logement","Alloggio"]],
+  ["video",["Βίντεο","Videos","Videos","Vidéos","Video"]],
+  ["rules",["Κανόνες","House rules","Hausregeln","Règles","Regole"]],
+  ["area",["Γειτονιά","Neighbourhood","Umgebung","Quartier","Dintorni"]],
+  ["sos",["Έκτακτα","Emergency","Notfall","Urgences","Emergenze"]]
+];
+
+var HEAD={
+ h1:["Καλώς ήρθατε στο LOAM","Welcome to LOAM","Willkommen im LOAM","Bienvenue au LOAM","Benvenuti a LOAM"],
+ sub:["Ό,τι χρειάζεστε για τη διαμονή σας — αποθηκεύστε τη σελίδα",
+      "Everything you need for your stay — save this page",
+      "Alles für Ihren Aufenthalt — speichern Sie diese Seite",
+      "Tout ce qu'il vous faut pour votre séjour — enregistrez cette page",
+      "Tutto ciò che vi serve per il soggiorno — salvate questa pagina"],
+ foot:["Καλή διαμονή στη Θεσσαλονίκη!","Enjoy your stay in Thessaloniki!",
+       "Genießen Sie Ihren Aufenthalt in Thessaloniki!","Bon séjour à Thessalonique !",
+       "Buon soggiorno a Salonicco!"]
+};
+
+var DATA={
+ arrive:[
+  {ic:"🔑",t:["Είσοδος","Getting in","Ankunft","Accès","Ingresso"],b:[
+   ["Έξω από την πολυκατοικία υπάρχει ένα ερμάριο (locker). Πριν την άφιξή σας σας στέλνουμε πού ακριβώς βρίσκεται και τον <b>τετραψήφιο κωδικό</b> του — μέσα θα βρείτε ένα μικρό καρτελάκι-κλειδί.",
+    "There's a locker just outside the building. Before you arrive we send you exactly where it is and its <b>four-digit code</b> — inside you'll find a small key tag.",
+    "Direkt vor dem Gebäude befindet sich ein Schließfach (Locker). Vor Ihrer Ankunft senden wir Ihnen den genauen Standort und den <b>vierstelligen Code</b> — darin finden Sie einen kleinen Schlüsselanhänger.",
+    "Un casier (locker) se trouve juste devant l'immeuble. Avant votre arrivée, nous vous indiquons son emplacement exact et son <b>code à quatre chiffres</b> — à l'intérieur, vous trouverez un petit badge-clé.",
+    "Proprio fuori dal palazzo c'è un armadietto (locker). Prima del vostro arrivo vi inviamo dove si trova esattamente e il suo <b>codice a quattro cifre</b> — all'interno troverete una piccola tessera-chiave."],
+   ["Με αυτό το καρτελάκι ανοίγετε <b>και</b> την είσοδο της πολυκατοικίας <b>και</b> την πόρτα του διαμερίσματος.",
+    "That one tag opens <b>both</b> the building entrance <b>and</b> the flat door.",
+    "Mit diesem Anhänger öffnen Sie <b>sowohl</b> den Hauseingang <b>als auch</b> die Wohnungstür.",
+    "Ce badge ouvre <b>à la fois</b> l'entrée de l'immeuble <b>et</b> la porte du logement.",
+    "Con questa tessera aprite <b>sia</b> l'ingresso del palazzo <b>sia</b> la porta dell'appartamento."],
+   ["Μπαίνοντας, στα δεξιά σας υπάρχει ο ενεργειακός διακόπτης. Τοποθετήστε εκεί το καρτελάκι και το ρεύμα ανάβει αυτόματα.",
+    "As you step in, on your right there's the energy switch. Drop the tag into it and the electricity comes on automatically.",
+    "Beim Eintreten finden Sie rechts den Energieschalter. Stecken Sie den Anhänger hinein und der Strom schaltet sich automatisch ein.",
+    "En entrant, à votre droite se trouve l'interrupteur d'énergie. Insérez-y le badge et l'électricité s'active automatiquement.",
+    "Entrando, alla vostra destra c'è l'interruttore di energia. Inseritevi la tessera e l'elettricità si attiva automaticamente."],
+   ["Σημαντικό: κλειδώνετε την πόρτα σε κάθε έξοδό σας. Ακουμπήστε το καρτελάκι και, μόλις ενεργοποιηθεί η κλειδαριά, γυρίστε δεξιόστροφα μέχρι να κλειδώσει.",
+    "Important: lock the door every time you leave. Tap the tag and, once the lock activates, turn it clockwise until it locks.",
+    "Wichtig: Schließen Sie die Tür bei jedem Verlassen ab. Halten Sie den Anhänger an und drehen Sie nach dem Aktivieren im Uhrzeigersinn, bis sie verriegelt.",
+    "Important : verrouillez la porte à chaque sortie. Passez le badge et, dès que la serrure s'active, tournez dans le sens horaire jusqu'au verrouillage.",
+    "Importante: chiudete a chiave la porta ogni volta che uscite. Avvicinate la tessera e, appena la serratura si attiva, girate in senso orario fino a bloccarla."]]},
+  {ic:"📍",t:["Πού θα μας βρείτε","Finding the flat","So finden Sie uns","Nous trouver","Come trovarci"],b:[
+   ["Πετροπουλακίδων 3, 546 35 — ιστορικό κέντρο, λίγο κάτω από την Αγίου Δημητρίου, 4-5΄ με τα πόδια από τη Ροτόντα και την Καμάρα. Ισόγειο διαμέρισμα.",
+    "Petropoulakidon 3, 546 35 — historic centre, just below Agiou Dimitriou street, a 4-5 min walk from the Rotonda and Kamara. Ground-floor flat.",
+    "Petropoulakidon 3, 546 35 — historisches Zentrum, kurz unterhalb der Agiou-Dimitriou-Straße, 4-5 Min. zu Fuß von Rotonda und Kamara. Erdgeschosswohnung.",
+    "Petropoulakidon 3, 546 35 — centre historique, juste en contrebas de la rue Agiou Dimitriou, à 4-5 min à pied de la Rotonde et de Kamara. Rez-de-chaussée.",
+    "Petropoulakidon 3, 546 35 — centro storico, poco sotto la via Agiou Dimitriou, a 4-5 min a piedi dalla Rotonda e da Kamara. Appartamento al piano terra."],
+   ["Μπαίνοντας στην πολυκατοικία, στα αριστερά σας ξεκινά ένας διάδρομος που οδηγεί αποκλειστικά στο διαμέρισμά μας.",
+    "Once inside the building, a corridor starts on your left and leads to our flat and only ours.",
+    "Im Gebäude beginnt links ein Flur, der ausschließlich zu unserer Wohnung führt.",
+    "Une fois dans l’immeuble, un couloir part sur votre gauche et mène uniquement à notre logement.",
+    "Entrati nel palazzo, sulla sinistra parte un corridoio che porta soltanto al nostro appartamento."]]},
+  {ic:"🕒",t:["Check-in / Check-out","Check-in / Check-out","Check-in / Check-out","Arrivée / Départ","Check-in / Check-out"],b:[
+   ["Ευέλικτα, χωρίς άγχος. Ιδανικές ώρες: check-in από τις 11:00, check-out έως τις 11:00. Πείτε μας την ώρα άφιξης/αναχώρησης και τα προσαρμόζουμε.",
+    "Flexible and relaxed. Ideal times: check-in from 11:00, check-out by 11:00. Tell us your arrival/departure time and we'll adjust.",
+    "Flexibel und entspannt. Ideale Zeiten: Check-in ab 11:00, Check-out bis 11:00. Sagen Sie uns Ihre Ankunfts-/Abreisezeit und wir passen es an.",
+    "Flexible et sans stress. Horaires idéaux : arrivée dès 11h00, départ jusqu'à 11h00. Indiquez-nous votre horaire et nous nous adaptons.",
+    "Flessibile e senza stress. Orari ideali: check-in dalle 11:00, check-out entro le 11:00. Diteci l'ora di arrivo/partenza e ci adattiamo."]]},
+  {ic:"🚗",t:["Στάθμευση","Parking","Parken","Stationnement","Parcheggio"],b:[
+   ["Υπάρχουν πολλά ιδιωτικά πάρκινγκ στη γύρω περιοχή. Το πιο κοντινό είναι ακριβώς στη διπλανή πολυκατοικία (Αγίου Δημητρίου 130, κολλητά στην είσοδό μας). Πολύ κοντά και αξιόπιστο: Parking Delmouzou (Αλ. Δελμούζου 3, 24ωρο, κρατάτε τα κλειδιά σας) και Parking Rotonda (Δημ. Γούναρη 62), δίπλα στη Ροτόντα.",
+    "There are several private car parks nearby. The closest is right in the building next door (Agiou Dimitriou 130, attached to our entrance). Very close and reliable: Parking Delmouzou (Al. Delmouzou 3, 24h, you keep your keys) and Parking Rotonda (Dim. Gounari 62), by the Rotonda.",
+    "In der Umgebung gibt es mehrere private Parkhäuser. Das nächste liegt direkt im Nachbargebäude (Agiou Dimitriou 130, an unserem Eingang). Sehr nah und zuverlässig: Parking Delmouzou (Al. Delmouzou 3, 24 Std., Schlüssel bleiben bei Ihnen) und Parking Rotonda (Dim. Gounari 62), an der Rotonda.",
+    "Plusieurs parkings privés se trouvent à proximité. Le plus proche est dans l'immeuble voisin (Agiou Dimitriou 130, accolé à notre entrée). Très proche et fiable : Parking Delmouzou (Al. Delmouzou 3, 24h, vous gardez vos clés) et Parking Rotonda (Dim. Gounari 62), près de la Rotonde.",
+    "Nei dintorni ci sono diversi parcheggi privati. Il più vicino è proprio nel palazzo accanto (Agiou Dimitriou 130, attaccato al nostro ingresso). Molto vicino e affidabile: Parking Delmouzou (Al. Delmouzou 3, 24h, tenete voi le chiavi) e Parking Rotonda (Dim. Gounari 62), accanto alla Rotonda."]]}
+ ],
+ house:[
+  {ic:"📶",t:["Wi-Fi","Wi-Fi","WLAN","Wi-Fi","Wi-Fi"],b:[
+   ["Δίκτυο: <b>LOAM_Apartment_5GHz</b> ή <b>LOAM_Apartment_2.4GHz</b> · Κωδικός: <b>__WIFI_PASSWORD__</b>. Στο σπίτι θα βρείτε και κάρτα με QR — σκανάρετε για αυτόματη σύνδεση.",
+    "Network: <b>LOAM_Apartment_5GHz</b> or <b>LOAM_Apartment_2.4GHz</b> · Password: <b>__WIFI_PASSWORD__</b>. There's also a QR card in the flat — scan to connect automatically.",
+    "Netzwerk: <b>LOAM_Apartment_5GHz</b> oder <b>LOAM_Apartment_2.4GHz</b> · Passwort: <b>__WIFI_PASSWORD__</b>. In der Wohnung liegt auch eine QR-Karte — scannen und automatisch verbinden.",
+    "Réseau : <b>LOAM_Apartment_5GHz</b> ou <b>LOAM_Apartment_2.4GHz</b> · Mot de passe : <b>__WIFI_PASSWORD__</b>. Une carte QR se trouve aussi dans le logement — scannez pour vous connecter.",
+    "Rete: <b>LOAM_Apartment_5GHz</b> o <b>LOAM_Apartment_2.4GHz</b> · Password: <b>__WIFI_PASSWORD__</b>. Nell'appartamento c'è anche una tessera con QR — scansionatela per connettervi automaticamente."]]},
+  {ic:"🚿",t:["Ζεστό νερό","Hot water","Warmwasser","Eau chaude","Acqua calda"],b:[
+   ["Πατήστε το κουμπί «START» στον θερμοσίφωνα για ζεστό νερό. (Υπάρχει και κάρτα-οδηγός δίπλα στον θερμοσίφωνα.)",
+    "Press the \u201cSTART\u201d button on the water heater for hot water. (There's a reminder card by the heater too.)",
+    "Drücken Sie die \u201eSTART\u201c-Taste am Warmwasserboiler für heißes Wasser. (Neben dem Boiler liegt eine Hinweiskarte.)",
+    "Appuyez sur le bouton \u00abSTART\u00bb du chauffe-eau pour l'eau chaude. (Une carte-guide se trouve à côté du chauffe-eau.)",
+    "Premete il pulsante \u00abSTART\u00bb sullo scaldabagno per l'acqua calda. (Accanto allo scaldabagno c'è anche una scheda-guida.)"]]},
+  {ic:"❄️",t:["Κλιματισμός","Air conditioning","Klimaanlage","Climatisation","Aria condizionata"],b:[
+   ["Κάθε δωμάτιο έχει δικό του A/C με τηλεχειριστήριο. Για να λειτουργήσουν, όλα τα παράθυρα πρέπει να είναι κλειστά — αν έστω κι ένα παράθυρο είναι ανοιχτό, τα κλιματιστικά δεν ενεργοποιούνται.",
+    "Each room has its own A/C with a remote. For them to work, all windows must be closed — if even one window is open, the A/C units won't switch on.",
+    "Jedes Zimmer hat eine eigene Klimaanlage mit Fernbedienung. Damit sie läuft, müssen alle Fenster geschlossen sein — ist auch nur ein Fenster offen, schalten sich die Geräte nicht ein.",
+    "Chaque pièce a sa propre climatisation avec télécommande. Pour qu'elles fonctionnent, toutes les fenêtres doivent être fermées — si une seule est ouverte, les climatiseurs ne s'allument pas.",
+    "Ogni stanza ha il proprio climatizzatore con telecomando. Perché funzionino, tutte le finestre devono essere chiuse — se anche una sola finestra è aperta, i climatizzatori non si accendono."]]},
+  {ic:"🍳",t:["Κουζίνα","Kitchen","Küche","Cuisine","Cucina"],b:[
+   ["Φούρνος, εστίες, ψυγείο, βραστήρας και καφετιέρα Nespresso στη διάθεσή σας. Πιάτα, ποτήρια και μαγειρικά σκεύη θα βρείτε στα ντουλάπια πάνω από τον πάγκο.",
+    "Oven, hob, fridge, kettle and a Nespresso machine are all yours. Plates, glasses and pans are in the cupboards above the worktop.",
+    "Backofen, Kochfeld, Kühlschrank, Wasserkocher und Nespresso-Maschine stehen bereit. Teller, Gläser und Töpfe finden Sie in den Schränken über der Arbeitsplatte.",
+    "Four, plaques, réfrigérateur, bouilloire et machine Nespresso sont à vous. Assiettes, verres et casseroles se trouvent dans les placards au-dessus du plan de travail.",
+    "Forno, piano cottura, frigorifero, bollitore e macchina Nespresso sono a vostra disposizione. Piatti, bicchieri e pentole si trovano negli armadietti sopra il piano di lavoro."]]},
+  {ic:"🧺",t:["Πλυντήριο & άπλωμα","Laundry","Wäsche","Buanderie","Bucato"],b:[
+   ["Το πλυντήριο (στο μπάνιο) είναι ελεύθερο προς χρήση. Απλώστρα θα βρείτε στο μπαλκόνι του μεγάλου υπνοδωματίου.",
+    "The washing machine (in the bathroom) is free to use. A drying rack is on the balcony off the main bedroom.",
+    "Die Waschmaschine (im Bad) können Sie frei benutzen. Ein Wäscheständer steht auf dem Balkon des großen Schlafzimmers.",
+    "Le lave-linge (dans la salle de bain) est à votre disposition. Un étendoir se trouve sur le balcon de la grande chambre.",
+    "La lavatrice (in bagno) è libera. Uno stendino si trova sul balcone della camera grande."]]},
+  {ic:"📺",t:["Τηλεόραση","Smart TV","Smart-TV","Smart TV","Smart TV"],b:[
+   ["Smart TV: συνδεθείτε με τον δικό σας λογαριασμό στις υπηρεσίες που θέλετε (Netflix κ.λπ.) ή κάντε cast από το κινητό. Αποσυνδεθείτε πριν φύγετε.",
+    "Smart TV: sign in with your own account to any service (Netflix etc.) or cast from your phone. Please sign out before you leave.",
+    "Smart-TV: Melden Sie sich mit Ihrem eigenen Konto bei beliebigen Diensten an (Netflix usw.) oder casten Sie vom Handy. Bitte vor der Abreise abmelden.",
+    "Smart TV : connectez-vous avec votre propre compte aux services de votre choix (Netflix, etc.) ou diffusez depuis votre téléphone. Déconnectez-vous avant de partir.",
+    "Smart TV: accedete con il vostro account ai servizi che preferite (Netflix ecc.) o trasmettete dal telefono. Disconnettetevi prima di partire."]]},
+  {ic:"🛡️",t:["Ασφάλεια","Safety","Sicherheit","Sécurité","Sicurezza"],b:[
+   ["Πυροσβεστήρας, κουτί πρώτων βοηθειών και ηλεκτρικός πίνακας βρίσκονται κοντά στην είσοδο και το μπάνιο. Ισόγειο σπίτι: κατεβάζετε τα ρολά όταν λείπετε.",
+    "Fire extinguisher, first-aid kit and fuse box are near the entrance and bathroom. Ground-floor flat: please lower the shutters when you're out.",
+    "Feuerlöscher, Erste-Hilfe-Kasten und Sicherungskasten befinden sich nahe Eingang und Bad. Erdgeschoss: Bitte lassen Sie die Rollläden herunter, wenn Sie weg sind.",
+    "Extincteur, trousse de secours et tableau électrique se trouvent près de l'entrée et de la salle de bain. Rez-de-chaussée : baissez les volets en votre absence.",
+    "Estintore, kit di primo soccorso e quadro elettrico si trovano vicino all'ingresso e al bagno. Piano terra: abbassate le tapparelle quando siete fuori."]]}
+ ],
+ rules:[
+  {ic:"🚭",t:["Κάπνισμα","Smoking","Rauchen","Cigarettes","Fumo"],b:[
+   ["Όχι μέσα στο σπίτι. Επιτρέπεται στο μπαλκόνι του μεγάλου υπνοδωματίου, με κλειστή την πόρτα.",
+    "Not inside the flat. Allowed on the small balcony off the main bedroom, with the door closed.",
+    "Nicht in der Wohnung. Erlaubt auf dem kleinen Balkon des großen Schlafzimmers, bei geschlossener Tür.",
+    "Pas à l'intérieur du logement. Autorisé sur le petit balcon de la grande chambre, porte fermée.",
+    "Non all'interno dell'appartamento. Consentito sul piccolo balcone della camera grande, con la porta chiusa."]]},
+  {ic:"🤫",t:["Ώρες ησυχίας","Quiet hours","Ruhezeiten","Heures calmes","Ore di silenzio"],b:[
+   ["15:00-17:30 & 23:00-07:00 (κοινές ώρες κοινής ησυχίας στην Ελλάδα). Είμαστε σε κατοικημένη πολυκατοικία — ας κρατήσουμε την ηρεμία για τους γείτονες.",
+    "3-5:30 pm & 11 pm-7 am (standard Greek quiet hours). This is a lived-in building — let's keep it peaceful for the neighbours.",
+    "15:00-17:30 & 23:00-07:00 (übliche Ruhezeiten in Griechenland). Dies ist ein bewohntes Haus — bitte Rücksicht auf die Nachbarn.",
+    "15h00-17h30 & 23h00-07h00 (heures de silence habituelles en Grèce). L'immeuble est habité — restons paisibles pour les voisins.",
+    "15:00-17:30 e 23:00-07:00 (consuete ore di silenzio in Grecia). Il palazzo è abitato — manteniamo la quiete per i vicini."]]},
+  {ic:"🎉",t:["Πάρτι & επισκέπτες","Parties & visitors","Partys & Besuch","Fêtes & visiteurs","Feste e visitatori"],b:[
+   ["Χωρίς πάρτι. Διανυκτερεύουν μόνο τα άτομα της κράτησης.",
+    "No parties. Only registered guests may stay overnight.",
+    "Keine Partys. Über Nacht bleiben nur die gemeldeten Gäste.",
+    "Pas de fêtes. Seuls les hôtes enregistrés peuvent passer la nuit.",
+    "Niente feste. Possono pernottare solo gli ospiti registrati."]]},
+  {ic:"🗑️",t:["Σκουπίδια","Rubbish","Müll","Déchets","Rifiuti"],b:[
+   ["Θα βρείτε κάδο ακριβώς έξω από το σπίτι. Ανακύκλωση στους μπλε κάδους.",
+    "There's a bin right outside the flat. Recycling goes in the blue bins.",
+    "Direkt vor der Wohnung steht ein Mülleimer. Recycling in die blauen Tonnen.",
+    "Une poubelle se trouve juste devant le logement. Recyclage dans les bacs bleus.",
+    "C'è un bidone proprio fuori dall'appartamento. La raccolta differenziata va nei bidoni blu."]]},
+  {ic:"👋",t:["Πριν φύγετε","Before you leave","Vor der Abreise","Avant de partir","Prima di partire"],b:[
+   ["1) Σβήστε τα κλιματιστικά · 2) Πετάξτε τα σκουπίδια · 3) Αφήστε τις πετσέτες σε έναν σωρό στο μπάνιο · 4) <b>Βγάλτε το καρτελάκι από τον ενεργειακό διακόπτη και αφήστε το στο τραπέζι της κουζίνας</b> — έτσι κόβεται το ρεύμα · 5) Κλειδώστε την πόρτα με το καρτελάκι, γυρνώντας δεξιόστροφα. Καλό ταξίδι! ✈️",
+    "1) Switch off the A/C · 2) Take out the rubbish · 3) Leave towels in a pile in the bathroom · 4) <b>Take the key tag out of the energy switch and leave it on the kitchen table</b> — this cuts the power · 5) Lock the door with the key tag, turning clockwise. Safe travels! ✈️",
+    "1) Klimaanlagen ausschalten · 2) Müll rausbringen · 3) Handtücher im Bad stapeln · 4) <b>Den Schlüsselanhänger aus dem Energieschalter nehmen und auf den Küchentisch legen</b> — so wird der Strom abgeschaltet · 5) Tür mit dem Schlüsselanhänger abschließen, im Uhrzeigersinn drehen. Gute Reise! ✈️",
+    "1) Éteignez les climatiseurs · 2) Sortez les poubelles · 3) Laissez les serviettes en tas dans la salle de bain · 4) <b>Retirez le badge de l'interrupteur d'énergie et laissez-le sur la table de la cuisine</b> — cela coupe le courant · 5) Verrouillez la porte avec le badge, en tournant dans le sens horaire. Bon voyage ! ✈️",
+    "1) Spegnete i climatizzatori · 2) Portate fuori i rifiuti · 3) Lasciate gli asciugamani in un mucchio in bagno · 4) <b>Togliete la tessera dall'interruttore di energia e lasciatela sul tavolo della cucina</b> — così si stacca la corrente · 5) Chiudete la porta con la tessera, girando in senso orario. Buon viaggio! ✈️"]]}
+ ],
+ area:[
+  {ic:"🏛️",t:["Αξιοθέατα με τα πόδια","Sights on foot","Sehenswertes zu Fuß","À pied","A piedi"],b:[
+   ["Είστε στην καρδιά του ιστορικού κέντρου. Δίπλα σας: ο Άγιος Δημήτριος (5΄), η Ρωμαϊκή Αγορά (5΄), η Ροτόντα (5΄) και η Καμάρα / Αψίδα Γαλερίου (5΄). Λίγο πιο κάτω: Αγία Σοφία (8΄), πλατεία Αριστοτέλους (12΄) και η παραλία με τον Λευκό Πύργο (15΄). Ανηφορίζοντας φτάνετε στην Άνω Πόλη και τα βυζαντινά τείχη.",
+    "You're in the heart of the historic centre. Right by you: Agios Dimitrios church (5 min), the Roman Forum (5 min), the Rotonda (5 min) and the Arch of Galerius / Kamara (5 min). A little downhill: Agia Sofia (8 min), Aristotelous Square (12 min) and the waterfront with the White Tower (15 min). Uphill you reach the Upper Town and the Byzantine walls.",
+    "Sie sind im Herzen des historischen Zentrums. Ganz in der Nähe: Kirche Agios Dimitrios (5 Min.), das Römische Forum (5 Min.), die Rotonda (5 Min.) und der Galeriusbogen / Kamara (5 Min.). Etwas bergab: Agia Sofia (8 Min.), Aristotelous-Platz (12 Min.) und die Uferpromenade mit dem Weißen Turm (15 Min.). Bergauf erreichen Sie die Oberstadt und die byzantinischen Mauern.",
+    "Vous êtes au cœur du centre historique. Tout près : l'église Agios Dimitrios (5 min), le Forum romain (5 min), la Rotonde (5 min) et l'Arc de Galère / Kamara (5 min). Un peu plus bas : Agia Sofia (8 min), la place Aristotelous (12 min) et le front de mer avec la Tour Blanche (15 min). En montant, vous atteignez la Ville Haute et les remparts byzantins.",
+    "Siete nel cuore del centro storico. A due passi: la chiesa di Agios Dimitrios (5 min), il Foro Romano (5 min), la Rotonda (5 min) e l'Arco di Galerio / Kamara (5 min). Poco più in basso: Agia Sofia (8 min), piazza Aristotelous (12 min) e il lungomare con la Torre Bianca (15 min). Salendo si raggiungono la Città Alta e le mura bizantine."]]},
+  {ic:"🍽️",t:["Φαγητό εδώ γύρω","Food nearby","Essen in der Nähe","Manger à côté","Mangiare vicino"],b:[
+   ["Στο κέντρο υπάρχουν αυθεντικές γεύσεις παντού. Κλασικές επιλογές: μπουγάτσα στον «Μπουγάτσα Γιάννης» (Μητροπόλεως 106), προφιτερόλ στο «Choureal» (Π. Π. Γερμανού 9) και ταβέρνα «Τσινάρι» (Αλ. Παπαδοπούλου 72).",
+    "The centre is full of authentic flavours. Classic picks: bougatsa at \u201cBougatsa Giannis\u201d (Mitropoleos 106), profiterole at \u201cChoureal\u201d (P. P. Germanou 9) and the \u201cTsinari\u201d taverna (Al. Papadopoulou 72).",
+    "Das Zentrum steckt voller authentischer Aromen. Klassiker: Bougatsa bei \u201eBougatsa Giannis\u201c (Mitropoleos 106), Profiterole bei \u201eChoureal\u201c (P. P. Germanou 9) und die Taverne \u201eTsinari\u201c (Al. Papadopoulou 72).",
+    "Le centre regorge de saveurs authentiques. Incontournables : bougatsa chez \u00abBougatsa Giannis\u00bb (Mitropoleos 106), profiterole chez \u00abChoureal\u00bb (P. P. Germanou 9) et la taverne \u00abTsinari\u00bb (Al. Papadopoulou 72).",
+    "Il centro è pieno di sapori autentici. Scelte classiche: bougatsa da \u00abBougatsa Giannis\u00bb (Mitropoleos 106), profiterole da \u00abChoureal\u00bb (P. P. Germanou 9) e la taverna \u00abTsinari\u00bb (Al. Papadopoulou 72)."]]},
+  {ic:"☕",t:["Καφές & κοκτέιλ","Coffee & cocktails","Kaffee & Cocktails","Café & cocktails","Caffè e cocktail"],b:[
+   ["Για καφέ και κοκτέιλ, περάστε από το «Après» (Μητροπόλεως 40) — εκεί δουλεύει ο host σας και θα σας φτιάξει τα καλύτερα κοκτέιλ! Γύρω από την Καμάρα και την πλατεία Ναυαρίνου θα βρείτε κι άλλα μπαράκια.",
+    "For coffee and cocktails, drop by \u201cApr\u00e8s\u201d (Mitropoleos 40) — your host works there and will make you the best cocktails! Around Kamara and Navarino Square you'll find more bars.",
+    "Für Kaffee und Cocktails schauen Sie bei \u201eApr\u00e8s\u201c vorbei (Mitropoleos 40) — dort arbeitet Ihr Gastgeber und mixt Ihnen die besten Cocktails! Rund um Kamara und den Navarino-Platz gibt es weitere Bars.",
+    "Pour un café ou un cocktail, passez à \u00abApr\u00e8s\u00bb (Mitropoleos 40) — votre hôte y travaille et vous préparera les meilleurs cocktails ! Autour de Kamara et de la place Navarino, vous trouverez d'autres bars.",
+    "Per caffè e cocktail passate da \u00abApr\u00e8s\u00bb (Mitropoleos 40) — ci lavora il vostro host e vi preparerà i migliori cocktail! Intorno a Kamara e piazza Navarino troverete altri bar."]]},
+  {ic:"🛒",t:["Χρήσιμα","Essentials","Wichtiges","Essentiel","Utile"],b:[
+   ["Φαρμακείο: Αγίου Δημητρίου 128, λίγα μέτρα μακριά. Μίνι μάρκετ 24ώρο: YES! STORES (Αγίου Δημητρίου 60). Σούπερ μάρκετ ακριβώς δίπλα: BAZAAR Supermarket και Discount Markt. ATM στην Εγνατία.",
+    "Pharmacy: Agiou Dimitriou 128, a few metres away. 24h mini-market: YES! STORES (Agiou Dimitriou 60). Supermarkets right next door: BAZAAR Supermarket and Discount Markt. ATMs on Egnatia.",
+    "Apotheke: Agiou Dimitriou 128, wenige Meter entfernt. 24-Std.-Minimarkt: YES! STORES (Agiou Dimitriou 60). Supermärkte gleich nebenan: BAZAAR Supermarket und Discount Markt. Geldautomaten an der Egnatia.",
+    "Pharmacie : Agiou Dimitriou 128, à quelques mètres. Supérette 24h : YES! STORES (Agiou Dimitriou 60). Supermarchés juste à côté : BAZAAR Supermarket et Discount Markt. Distributeurs sur Egnatia.",
+    "Farmacia: Agiou Dimitriou 128, a pochi metri. Mini-market 24h: YES! STORES (Agiou Dimitriou 60). Supermercati proprio accanto: BAZAAR Supermarket e Discount Markt. Bancomat sulla Egnatia."]]},
+  {ic:"🚌",t:["Μετακινήσεις","Getting around","Verkehr","Se déplacer","Spostarsi"],b:[
+   ["Προς κέντρο / παραλία: με τα πόδια κατηφορικά ~10-15΄ ή λεωφορείο. Η Εγνατία (κύριος άξονας με λεωφορεία) είναι 2΄ μακριά. Αεροδρόμιο SKG: ταξί ~25-35΄ ή λεωφορείο από το κέντρο.",
+    "To the centre / waterfront: a ~10-15 min downhill walk or a bus. Egnatia (the main bus avenue) is 2 min away. SKG airport: taxi ~25-35 min or a bus from the centre.",
+    "Zum Zentrum / zur Uferpromenade: ~10-15 Min. bergab zu Fuß oder mit dem Bus. Die Egnatia (Hauptbusachse) ist 2 Min. entfernt. Flughafen SKG: Taxi ~25-35 Min. oder Bus vom Zentrum.",
+    "Vers le centre / le front de mer : ~10-15 min à pied en descente ou en bus. L'Egnatia (grand axe de bus) est à 2 min. Aéroport SKG : taxi ~25-35 min ou bus depuis le centre.",
+    "Verso il centro / il lungomare: ~10-15 min a piedi in discesa o in autobus. La Egnatia (arteria principale dei bus) è a 2 min. Aeroporto SKG: taxi ~25-35 min o autobus dal centro."]]}
+ ],
+ sos:[
+  {ic:"📞",t:["Επικοινωνία","Contact us","Kontakt","Contact","Contatti"],b:[
+   ["Host: Απόστολος · τηλέφωνο / WhatsApp: <b>+30 697 089 3592</b> · Δημήτρης: <b>+30 697 330 4333</b> · <b>loam.apartment.skg@gmail.com</b>. Απαντάμε συνήθως μέσα σε λίγα λεπτά.",
+    "Host: Apostolos · phone / WhatsApp: <b>+30 697 089 3592</b> · Dimitris: <b>+30 697 330 4333</b> · <b>loam.apartment.skg@gmail.com</b>. We usually reply within minutes.",
+    "Gastgeber: Apostolos · Telefon / WhatsApp: <b>+30 697 089 3592</b> · Dimitris: <b>+30 697 330 4333</b> · <b>loam.apartment.skg@gmail.com</b>. Wir antworten meist innerhalb weniger Minuten.",
+    "Hôte : Apostolos · téléphone / WhatsApp : <b>+30 697 089 3592</b> · Dimitris : <b>+30 697 330 4333</b> · <b>loam.apartment.skg@gmail.com</b>. Nous répondons généralement en quelques minutes.",
+    "Host: Apostolos · telefono / WhatsApp: <b>+30 697 089 3592</b> · Dimitris: <b>+30 697 330 4333</b> · <b>loam.apartment.skg@gmail.com</b>. Di solito rispondiamo in pochi minuti."]]},
+  {ic:"🚨",t:["Έκτακτη ανάγκη","Emergency","Notfall","Urgences","Emergenza"],b:[
+   ["Ευρωπαϊκός αριθμός: <b>112</b> (λειτουργεί στα αγγλικά) · Αστυνομία 100 · Ασθενοφόρο 166 · Πυροσβεστική 199 · Νοσοκομείο Παπαγεωργίου 2313 323 200.",
+    "European emergency number: <b>112</b> (English spoken) · Police 100 · Ambulance 166 · Fire 199 · Papageorgiou Hospital 2313 323 200.",
+    "Europäische Notrufnummer: <b>112</b> (Englisch möglich) · Polizei 100 · Krankenwagen 166 · Feuerwehr 199 · Papageorgiou-Krankenhaus 2313 323 200.",
+    "Numéro d'urgence européen : <b>112</b> (anglais possible) · Police 100 · Ambulance 166 · Pompiers 199 · Hôpital Papageorgiou 2313 323 200.",
+    "Numero unico europeo: <b>112</b> (si parla inglese) · Polizia 100 · Ambulanza 166 · Vigili del fuoco 199 · Ospedale Papageorgiou 2313 323 200."]]},
+  {ic:"🔧",t:["Κάτι χάλασε;","Something broke?","Etwas kaputt?","Un souci ?","Qualcosa non va?"],b:[
+   ["Μην ανησυχείτε και μην το επισκευάσετε μόνοι σας — στείλτε μας μήνυμα ή φωτογραφία και το αναλαμβάνουμε άμεσα.",
+    "Don't worry, and please don't try to fix it yourself — message us a photo and we'll handle it right away.",
+    "Keine Sorge, und bitte reparieren Sie nichts selbst — schicken Sie uns ein Foto und wir kümmern uns sofort darum.",
+    "Pas d'inquiétude, et ne réparez rien vous-même — envoyez-nous une photo et nous nous en occupons aussitôt.",
+    "Niente panico e non riparate nulla da soli — inviateci un messaggio o una foto e ce ne occupiamo subito."]]}
+ ],
+ video:[
+  {ic:"🎬",vid:"entrance",portrait:true,t:["Είσοδος & ρεύμα","Getting in & the power","Eingang & Strom","Entrée & courant","Ingresso e corrente"],b:[
+   ["Πώς ανοίγετε την είσοδο της πολυκατοικίας και την πόρτα του σπιτιού με το καρτελάκι, και πώς ενεργοποιείτε το ρεύμα.",
+    "How to open the building entrance and the flat door with the key tag, and how to switch on the power.",
+    "Wie Sie Hauseingang und Wohnungstür mit dem Schlüsselanhänger öffnen und den Strom einschalten.",
+    "Comment ouvrir l’entrée de l’immeuble et la porte du logement avec le badge, et activer le courant.",
+    "Come aprire l’ingresso del palazzo e la porta dell’appartamento con la tessera, e attivare la corrente."]]},
+  {ic:"🛏️",vid:"sofabed",t:["Άνοιγμα καναπέ-κρεβατιού","Opening the sofa-bed","Schlafsofa öffnen","Ouvrir le canapé-lit","Aprire il divano letto"],b:[
+   ["Πώς μετατρέπετε τον καναπέ σε διπλό κρεβάτι σε λίγα δευτερόλεπτα.",
+    "How to turn the sofa into a double bed in seconds.",
+    "Wie Sie das Sofa in Sekunden in ein Doppelbett verwandeln.",
+    "Comment transformer le canapé en lit double en quelques secondes.",
+    "Come trasformare il divano in un letto matrimoniale in pochi secondi."]]},
+  {ic:"🔥",vid:"boiler",portrait:true,t:["Ζεστό νερό","Hot water","Warmwasser","Eau chaude","Acqua calda"],b:[
+   ["Πού είναι ο θερμοσίφωνας και ποιο κουμπί πατάτε για ζεστό νερό.",
+    "Where the water heater is and which button to press for hot water.",
+    "Wo sich der Boiler befindet und welche Taste Sie für heißes Wasser drücken.",
+    "Où se trouve le chauffe-eau et quel bouton presser pour l'eau chaude.",
+    "Dove si trova lo scaldabagno e quale pulsante premere per l'acqua calda."]]}
+ ]
+};
+
+/* videos live at the site root so the guide slug can be rotated freely */
+var VBASE="../../assets/video/";
+
+var lang=0, tab="arrive";
+
+function render(){
+  var lg=document.getElementById("langs");
+  lg.innerHTML="";
+  LANGS.forEach(function(code,i){
+    var b=document.createElement("button");
+    b.textContent=code;
+    b.className=(i===lang)?"on":"";
+    b.onclick=function(){lang=i;render();};
+    lg.appendChild(b);
+  });
+
+  document.getElementById("h1").textContent =HEAD.h1[lang];
+  document.getElementById("sub").textContent=HEAD.sub[lang];
+
+  var nav=document.getElementById("nav");
+  nav.innerHTML="";
+  TABS.forEach(function(t){
+    var b=document.createElement("button");
+    b.textContent=t[1][lang];
+    b.className=(t[0]===tab)?"on":"";
+    b.onclick=function(){tab=t[0];render();window.scrollTo(0,0);};
+    nav.appendChild(b);
+  });
+
+  var main=document.getElementById("main");
+  main.innerHTML="";
+  DATA[tab].forEach(function(card){
+    var el=document.createElement("div");el.className="card";
+    var h='<div class="ct"><span class="ic">'+card.ic+'</span>'+card.t[lang]+'</div>';
+    if(card.vid){
+      h+='<div class="vwrap'+(card.portrait?" portrait":"")+'">'
+        +'<video controls playsinline webkit-playsinline preload="none" '
+        +'poster="'+VBASE+card.vid+'.jpg" '
+        +'controlslist="nodownload" disablepictureinpicture>'
+        +'<source src="'+VBASE+card.vid+'.mp4" type="video/mp4">'
+        +'</video><button class="vplay" aria-label="Play"><span></span></button></div>';
+    }
+    else if(card.hasOwnProperty("vid")){ h+='<div class="vph">▶  '+(lang===0?"Το βίντεο θα προστεθεί σύντομα":"Video coming soon")+'</div>'; }
+    if(card.b) card.b.forEach(function(item){ h+='<p>'+item[lang]+'</p>'; });
+    el.innerHTML=h;
+    main.appendChild(el);
+  });
+
+  /* play overlay: tap starts the video in place, then hands over to native controls.
+     Only one video plays at a time. */
+  main.querySelectorAll(".vplay").forEach(function(btn){
+    var v=btn.parentNode.querySelector("video");
+    btn.onclick=function(){ v.play(); };
+    v.addEventListener("play",function(){
+      btn.style.display="none";
+      main.querySelectorAll("video").forEach(function(o){ if(o!==v) o.pause(); });
+    });
+  });
+
+  var f=document.createElement("p");f.className="foot";f.textContent=HEAD.foot[lang];
+  main.appendChild(f);
+  var fm=document.createElement("div");fm.className="footmark";fm.textContent="L O A M";
+  main.appendChild(fm);
+}
+render();
+</script>
+</body>
+</html>

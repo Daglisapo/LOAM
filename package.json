@@ -1,0 +1,19 @@
+{
+  "name": "loamskg-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LOAM apartment — public site, guest guide and availability calendar",
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test/pricing.test.mjs && node test/gaps.test.mjs"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Daglisapo/loamskg.git"
+  }
+}
