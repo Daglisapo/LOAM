@@ -1,13 +1,12 @@
 import { fetchFeed, nightsOf, toRanges, todayISO, addDays, unbookableGaps } from '../lib/ical.mjs';
 import { readBlocks, readCache, writeCache } from '../lib/store.mjs';
-import { readRates, rateFor } from '../lib/rates.mjs';
+import { readRates, rateFor, minStayFor } from '../lib/rates.mjs';
 
 const TTL_MS = 5 * 60 * 1000;   // how stale the cached feeds may get
 const HORIZON_DAYS = 400;       // ignore anything further out than this
 
 // Mirror the listing's own rules. iCal carries none of this, so without it the
 // site offers nights the platforms would refuse to book.
-const MIN_STAY = Number(process.env.MIN_STAY || 2);
 const NOTICE_DAYS = Number(process.env.ADVANCE_NOTICE_DAYS || 3);
 
 /** Pull both remote feeds and cache the result. */
@@ -57,10 +56,13 @@ export default async (req) => {
   }
 
   const booked = nightsOf(all);
+  const rates = await readRates();
 
-  // nights that are free on paper but cannot actually be booked
+  // nights that are free on paper but cannot actually be booked.
+  // The minimum stay travels with the season, so a one-night hole in September
+  // closes against a three-night rule while the same hole in March does not.
   const firstBookable = addDays(today, NOTICE_DAYS);
-  const gaps = unbookableGaps(booked, today, limit, MIN_STAY);
+  const gaps = unbookableGaps(booked, today, limit, d => minStayFor(d, rates));
   for (let d = today; d < firstBookable; d = addDays(d, 1)) {
     if (!booked.has(d)) gaps.add(d);
   }
@@ -68,23 +70,30 @@ export default async (req) => {
   const busySet = new Set([...booked, ...gaps]);
   const busy = [...busySet].sort();
 
-  // nightly prices for the dates a guest could actually book
-  const rates = await readRates();
-  const prices = {};
+  // What a guest booking direct would pay per night, plus the rule that
+  // applies to it. Platform rates are stored; the site sells at the discount.
+  const off = 1 - (rates.directDiscount || 0);
+  const prices = {}, stays = {};
   for (let d = firstBookable; d < limit; d = addDays(d, 1)) {
-    if (!busySet.has(d)) prices[d] = rateFor(d, rates);
+    if (busySet.has(d)) continue;
+    prices[d] = Math.round(rateFor(d, rates) * off);
+    stays[d] = minStayFor(d, rates);
   }
 
   return new Response(JSON.stringify({
     updatedAt: cache.fetchedAt,
     today,
-    rules: { minStay: MIN_STAY, noticeDays: NOTICE_DAYS, firstBookable },
+    rules: { noticeDays: NOTICE_DAYS, firstBookable },
     rates: {
-      base: rates.base, currency: rates.currency,
-      includedGuests: rates.includedGuests, extraGuest: rates.extraGuest, maxGuests: rates.maxGuests,
-      periods: rates.periods,
+      currency: rates.currency,
+      baseGuests: rates.baseGuests,
+      extraGuest: rates.extraGuest,
+      maxGuests: rates.maxGuests,
+      cleaningFee: rates.cleaningFee,
+      directDiscount: rates.directDiscount,
     },
     prices,
+    minStay: stays,
     sources: cache.sources,
     busy,
     ranges: toRanges(busy),

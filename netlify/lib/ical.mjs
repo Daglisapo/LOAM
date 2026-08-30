@@ -125,18 +125,19 @@ export async function fetchFeed(url, source, timeoutMs = 10000) {
  * @param {Set<string>} busy   booked nights
  * @param {string} from        first night to consider
  * @param {string} to          exclusive end of the window
- * @param {number} minStay     nights required by the listing
+ * @param {function|number} minStayAt  nights required, per date
  * @returns {Set<string>}      nights that are unbookable but not booked
  */
-export function unbookableGaps(busy, from, to, minStay) {
+export function unbookableGaps(busy, from, to, minStayAt) {
   const gaps = new Set();
-  if (!minStay || minStay < 2) return gaps;
+  const need = typeof minStayAt === 'function' ? minStayAt : () => minStayAt;
 
   let run = [];
   for (let d = from; d < to; d = addDays(d, 1)) {
     if (busy.has(d)) {
       // the run just ended against a wall; the start of the window counts as one
-      if (run.length && run.length < minStay) for (const g of run) gaps.add(g);
+      // the run is measured against the rule for the night it starts on
+      if (run.length && run.length < need(run[0])) for (const g of run) gaps.add(g);
       run = [];
     } else {
       run.push(d);

@@ -1,7 +1,7 @@
 import { getStore } from '@netlify/blobs';
-import { DEFAULT_RATES } from './pricing.mjs';
+import { DEFAULT_RATES, SEASON_PRESET } from './pricing.mjs';
 
-export { DEFAULT_RATES, rateFor, quote } from './pricing.mjs';
+export { DEFAULT_RATES, rateFor, minStayFor, seasonFor, quote, orthodoxEaster, SEASON_PRESET } from './pricing.mjs';
 
 const KEY = 'rates.json';
 
@@ -12,7 +12,10 @@ function store() {
 export async function readRates() {
   try {
     const raw = await store().get(KEY, { type: 'json' });
-    return raw && typeof raw === 'object' ? { ...DEFAULT_RATES, ...raw } : { ...DEFAULT_RATES };
+    const merged = raw && typeof raw === 'object' ? { ...DEFAULT_RATES, ...raw } : { ...DEFAULT_RATES };
+    // a store written before seasons existed has none; fall back to the plan
+    if (!merged.seasons || !merged.seasons.length) merged.seasons = SEASON_PRESET;
+    return merged;
   } catch {
     return { ...DEFAULT_RATES };
   }

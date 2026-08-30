@@ -247,6 +247,9 @@ footer .arch{width:34px;height:26px;margin:0 auto 8px}
 </footer>
 <script>
 const TR={
+"q_clean": {"en": "Cleaning", "el": "Καθαριότητα", "de": "Endreinigung", "fr": "Ménage", "it": "Pulizia"},
+"q_saving": {"en": "Direct booking saving", "el": "Έκπτωση άμεσης κράτησης", "de": "Direktbuchungsrabatt", "fr": "Remise réservation directe", "it": "Sconto prenotazione diretta"},
+"q_minstay": {"en": "These dates need at least {n} nights.", "el": "Αυτές οι ημερομηνίες θέλουν τουλάχιστον {n} νύχτες.", "de": "Für diese Daten sind mindestens {n} Nächte nötig.", "fr": "Ces dates demandent au moins {n} nuits.", "it": "Queste date richiedono almeno {n} notti."},
 "q_nights": {"en": "{n} nights", "el": "{n} νύχτες", "de": "{n} Nächte", "fr": "{n} nuits", "it": "{n} notti"},
 "q_extra": {"en": "Extra guests ({n})", "el": "Επιπλέον άτομα ({n})", "de": "Zusätzliche Gäste ({n})", "fr": "Voyageurs supplémentaires ({n})", "it": "Ospiti aggiuntivi ({n})"},
 "q_total": {"en": "Total", "el": "Σύνολο", "de": "Gesamt", "fr": "Total", "it": "Totale"},
@@ -501,7 +504,7 @@ function setLang(l){
    The figures are advisory — the host confirms every request by hand — but they
    have to match what the booking would actually cost. */
 (function(){
-  var PRICES = null, RATES = null, RULES = null;
+  var PRICES = null, RATES = null, RULES = null, MINSTAY = {};
 
   function tr(k){ var l = document.documentElement.lang || "en"; return (TR[k] && TR[k][l]) || TR[k].en; }
   function money(n){
@@ -513,9 +516,10 @@ function setLang(l){
   function nextDay(d){ var n = new Date(d + "T00:00:00Z"); n.setUTCDate(n.getUTCDate()+1); return n.toISOString().slice(0,10); }
 
   window.__priceData = function(data){
-    PRICES = data.prices || {};
-    RATES  = data.rates  || null;
-    RULES  = data.rules  || null;
+    PRICES  = data.prices  || {};
+    RATES   = data.rates   || null;
+    RULES   = data.rules   || null;
+    MINSTAY = data.minStay || {};
   };
 
   /* paint the price under each free day */
@@ -526,19 +530,30 @@ function setLang(l){
     cell.textContent = ""; cell.appendChild(b); cell.appendChild(p);
   };
 
+  /* Mirrors netlify/lib/pricing.mjs. PRICES already carries the direct rate,
+     so the discount is shown as a saving against the platform price rather
+     than subtracted again. */
   function lines(ci, co, guests){
     if (!PRICES || !RATES || !ci || !co || co <= ci) return null;
-    var nights = 0, accommodation = 0;
+    var nights = 0, accommodation = 0, need = 1;
     for (var d = ci; d < co; d = nextDay(d)){
       var p = PRICES[d];
       if (p == null) return null;          // an unpriced night means unavailable
       accommodation += p; nights++;
+      if (nights === 1 && MINSTAY[d]) need = MINSTAY[d];
       if (nights > 400) return null;
     }
+    if (nights < need) return { short: need };
+
     var g = Math.max(1, Math.min(Number(guests) || 1, RATES.maxGuests));
-    var over = Math.max(0, g - RATES.includedGuests);
-    var extra = over * RATES.extraGuest * nights;
-    return { nights: nights, accommodation: accommodation, over: over, extra: extra, total: accommodation + extra };
+    var over = Math.max(0, g - RATES.baseGuests);
+    var off = 1 - (RATES.directDiscount || 0);
+    var extra = Math.round(over * RATES.extraGuest * off) * nights;
+    var clean = RATES.cleaningFee || 0;
+    var saving = Math.round((accommodation + extra) / off - (accommodation + extra));
+
+    return { nights: nights, accommodation: accommodation, over: over, extra: extra,
+             clean: clean, saving: saving, total: accommodation + extra + clean };
   }
 
   function render(){
@@ -548,6 +563,12 @@ function setLang(l){
                   document.getElementById("f-out").value,
                   document.getElementById("f-guests").value);
     if (!q){ box.className = "quote"; host.innerHTML = ""; return; }
+    if (q.short){
+      host.innerHTML = "";
+      var w = document.createElement("div"); w.className = "qrow";
+      w.textContent = tr("q_minstay").replace("{n}", q.short);
+      host.appendChild(w); box.className = "quote on"; return;
+    }
 
     host.innerHTML = "";
     function row(label, value, cls){
@@ -558,6 +579,8 @@ function setLang(l){
     }
     row(tr("q_nights").replace("{n}", q.nights), money(q.accommodation));
     if (q.extra) row(tr("q_extra").replace("{n}", q.over), money(q.extra));
+    if (q.clean) row(tr("q_clean"), money(q.clean));
+    if (q.saving) row(tr("q_saving"), "\u2212 " + money(q.saving));
     row(tr("q_total"), money(q.total), "tot");
     box.className = "quote on";
   }
