@@ -16,6 +16,7 @@ export const DEFAULT_RATES = {
   base: 72,            // fallback nightly rate when nothing more specific matches
   baseGuests: 2,       // guests already covered by the nightly rate
   extraGuest: 15,      // per additional guest, per night
+  underGuest: 10,      // off per guest below base occupancy, per night
   maxGuests: 6,
 
   cleaningFee: 0,      // the plan charges none
@@ -129,7 +130,13 @@ export function rateFor(date, rates) {
 export function nightlyFor(date, guests, rates, { direct = true } = {}) {
   const g = Math.max(1, Math.min(Number(guests) || 1, rates.maxGuests));
   const over = Math.max(0, g - rates.baseGuests);
-  const platform = rateFor(date, rates) + over * rates.extraGuest;
+  // Booking prices below base occupancy too, and if we did not match that a solo
+  // traveller would find the platform cheaper than booking here — which is the
+  // opposite of the point. Airbnb cannot express this at all.
+  const under = Math.max(0, rates.baseGuests - g);
+  const platform = rateFor(date, rates)
+    + over * rates.extraGuest
+    - under * (rates.underGuest || 0);
   if (!direct) return platform;
   return Math.round(platform * (1 - (rates.directDiscount || 0)));
 }

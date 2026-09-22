@@ -88,6 +88,7 @@ export default async (req) => {
       currency: rates.currency,
       baseGuests: rates.baseGuests,
       extraGuest: rates.extraGuest,
+      underGuest: rates.underGuest,
       maxGuests: rates.maxGuests,
       cleaningFee: rates.cleaningFee,
       directDiscount: rates.directDiscount,

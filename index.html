@@ -528,7 +528,8 @@ function setLang(l){
     if (!PRICES || PRICES[date] == null || !RATES) return null;
     var g = Math.max(1, Math.min(Number(guests) || 2, RATES.maxGuests));
     var over = Math.max(0, g - RATES.baseGuests);
-    var platform = PRICES[date] + over * RATES.extraGuest;
+    var under = Math.max(0, RATES.baseGuests - g);
+    var platform = PRICES[date] + over * RATES.extraGuest - under * (RATES.underGuest || 0);
     return Math.round(platform * (1 - (RATES.directDiscount || 0)));
   }
 
@@ -552,7 +553,7 @@ function setLang(l){
       var p = PRICES[d];
       if (p == null) return null;          // an unpriced night means unavailable
       accommodation += nightly(d, g);
-      list += p + over * RATES.extraGuest;
+      list += p + over * RATES.extraGuest - Math.max(0, RATES.baseGuests - g) * (RATES.underGuest || 0);
       nights++;
       if (nights === 1 && MINSTAY[d]) need = MINSTAY[d];
       if (nights > 400) return null;

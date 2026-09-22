@@ -55,5 +55,15 @@ if (start >= 0) {
   t('three nights across the weekend, 4 guests', q.total, expect);
 }
 
-console.log(`\n${pass} passed, ${fail} failed`);
+
+/* ---- single occupancy: Booking prices 10 below base, so we must too ---- */
+const Rs = { ...R, underGuest: 10 };
+const d0 = days[0];
+t('one guest, platform', nightlyFor(d0.date, 1, Rs, { direct: false }), d0.platform - 10);
+t('one guest, site',     nightlyFor(d0.date, 1, Rs), Math.round((d0.platform - 10) * 0.9));
+t('two guests unaffected', nightlyFor(d0.date, 2, Rs, { direct: false }), d0.platform);
+t('four guests unaffected', nightlyFor(d0.date, 4, Rs, { direct: false }), d0.platform + 30);
+t('zero underGuest is a no-op', nightlyFor(d0.date, 1, { ...R, underGuest: 0 }, { direct: false }), d0.platform);
+
+console.log(`\nwith single occupancy: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

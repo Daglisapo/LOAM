@@ -68,7 +68,7 @@ export default async (req) => {
 
   // update the base settings
   const fields = {
-    base: [1, 100000], extraGuest: [0, 10000],
+    base: [1, 100000], extraGuest: [0, 10000], underGuest: [0, 10000],
     baseGuests: [1, 20], maxGuests: [1, 20],
     cleaningFee: [0, 10000], minStay: [1, 30],
     directDiscount: [0, 0.9],
