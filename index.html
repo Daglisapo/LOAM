@@ -523,10 +523,19 @@ function setLang(l){
   };
 
   /* paint the price under each free day */
+  /* PRICES holds the platform rate; guests here pay the discounted one. */
+  function nightly(date, guests){
+    if (!PRICES || PRICES[date] == null || !RATES) return null;
+    var g = Math.max(1, Math.min(Number(guests) || 2, RATES.maxGuests));
+    var over = Math.max(0, g - RATES.baseGuests);
+    var platform = PRICES[date] + over * RATES.extraGuest;
+    return Math.round(platform * (1 - (RATES.directDiscount || 0)));
+  }
+
   window.__paintPrices = function(cell, key){
     if (!PRICES || !PRICES[key]) return;
     var b = document.createElement("b"); b.textContent = cell.textContent;
-    var p = document.createElement("span"); p.className = "p"; p.textContent = money(PRICES[key]);
+    var p = document.createElement("span"); p.className = "p"; p.textContent = money(nightly(key, 2));
     cell.textContent = ""; cell.appendChild(b); cell.appendChild(p);
   };
 
@@ -535,25 +544,24 @@ function setLang(l){
      than subtracted again. */
   function lines(ci, co, guests){
     if (!PRICES || !RATES || !ci || !co || co <= ci) return null;
-    var nights = 0, accommodation = 0, need = 1;
+    var g = Math.max(1, Math.min(Number(guests) || 1, RATES.maxGuests));
+    var over = Math.max(0, g - RATES.baseGuests);
+
+    var nights = 0, accommodation = 0, list = 0, need = 1;
     for (var d = ci; d < co; d = nextDay(d)){
       var p = PRICES[d];
       if (p == null) return null;          // an unpriced night means unavailable
-      accommodation += p; nights++;
+      accommodation += nightly(d, g);
+      list += p + over * RATES.extraGuest;
+      nights++;
       if (nights === 1 && MINSTAY[d]) need = MINSTAY[d];
       if (nights > 400) return null;
     }
     if (nights < need) return { short: need };
 
-    var g = Math.max(1, Math.min(Number(guests) || 1, RATES.maxGuests));
-    var over = Math.max(0, g - RATES.baseGuests);
-    var off = 1 - (RATES.directDiscount || 0);
-    var extra = Math.round(over * RATES.extraGuest * off) * nights;
     var clean = RATES.cleaningFee || 0;
-    var saving = Math.round((accommodation + extra) / off - (accommodation + extra));
-
-    return { nights: nights, accommodation: accommodation, over: over, extra: extra,
-             clean: clean, saving: saving, total: accommodation + extra + clean };
+    return { nights: nights, accommodation: accommodation, over: over,
+             clean: clean, saving: list - accommodation, total: accommodation + clean };
   }
 
   function render(){
@@ -578,7 +586,6 @@ function setLang(l){
       r.appendChild(a); r.appendChild(b); host.appendChild(r);
     }
     row(tr("q_nights").replace("{n}", q.nights), money(q.accommodation));
-    if (q.extra) row(tr("q_extra").replace("{n}", q.over), money(q.extra));
     if (q.clean) row(tr("q_clean"), money(q.clean));
     if (q.saving) row(tr("q_saving"), "\u2212 " + money(q.saving));
     row(tr("q_total"), money(q.total), "tot");

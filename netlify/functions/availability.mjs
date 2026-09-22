@@ -70,13 +70,13 @@ export default async (req) => {
   const busySet = new Set([...booked, ...gaps]);
   const busy = [...busySet].sort();
 
-  // What a guest booking direct would pay per night, plus the rule that
-  // applies to it. Platform rates are stored; the site sells at the discount.
-  const off = 1 - (rates.directDiscount || 0);
+  // The platform rate for each bookable night, untouched. The page applies the
+  // occupancy surcharge and the discount together, because rounding the two
+  // separately drifts by a euro against the pricing sheet.
   const prices = {}, stays = {};
   for (let d = firstBookable; d < limit; d = addDays(d, 1)) {
     if (busySet.has(d)) continue;
-    prices[d] = Math.round(rateFor(d, rates) * off);
+    prices[d] = rateFor(d, rates);
     stays[d] = minStayFor(d, rates);
   }
 

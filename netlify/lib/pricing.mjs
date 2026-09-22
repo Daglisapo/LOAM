@@ -13,17 +13,18 @@
 export const DEFAULT_RATES = {
   currency: 'EUR',
 
-  base: 74,            // fallback nightly rate when no season matches
+  base: 72,            // fallback nightly rate when nothing more specific matches
   baseGuests: 2,       // guests already covered by the nightly rate
-  extraGuest: 10,      // per additional guest, per night
+  extraGuest: 15,      // per additional guest, per night
   maxGuests: 6,
 
-  cleaningFee: 35,     // once per stay
-  directDiscount: 0.1, // taken off the accommodation, not the cleaning fee
-  minStay: 2,          // when the season does not say otherwise
+  cleaningFee: 0,      // the plan charges none
+  directDiscount: 0.1, // booking here instead of through a platform
+  minStay: 2,          // when nothing more specific says otherwise
 
-  seasons: [],         // see SEASON_PRESET
-  periods: [],         // manual overrides drawn on the calendar — always win
+  daily: {},           // date -> platform rate, straight from the pricing sheet
+  seasons: [],         // see SEASON_PRESET — covers dates the sheet does not
+  periods: [],         // ranges drawn on the calendar
 };
 
 /* ---------------------------------------------------------------- seasons */
@@ -108,11 +109,29 @@ export function seasonFor(date, rates) {
 
 /** Platform nightly rate for one date, at base occupancy. */
 export function rateFor(date, rates) {
-  for (const p of rates.periods || []) {           // manual overrides win outright
+  for (const p of rates.periods || []) {           // drawn on the calendar, wins outright
     if (date >= p.start && date < p.end) return p.price;
   }
+  const daily = rates.daily && rates.daily[date];  // the pricing sheet, day by day
+  if (daily != null) return daily;
   const s = seasonFor(date, rates);
   return s ? s.price : rates.base;
+}
+
+/**
+ * What one night costs for a given party size.
+ *
+ * The discount applies to the whole occupancy-adjusted rate and is rounded
+ * once. Discounting the base and the head charge separately drifts by a euro:
+ * round(72 x 0.9) + round(15 x 0.9) is 79, while round(87 x 0.9) is 78, and the
+ * pricing sheet means the second.
+ */
+export function nightlyFor(date, guests, rates, { direct = true } = {}) {
+  const g = Math.max(1, Math.min(Number(guests) || 1, rates.maxGuests));
+  const over = Math.max(0, g - rates.baseGuests);
+  const platform = rateFor(date, rates) + over * rates.extraGuest;
+  if (!direct) return platform;
+  return Math.round(platform * (1 - (rates.directDiscount || 0)));
 }
 
 /** Minimum nights required to start a stay on this date. */
@@ -136,18 +155,22 @@ const round = (n) => Math.round(n * 100) / 100;
  * the arrival day.
  */
 export function quote(from, to, guests, rates, { direct = true } = {}) {
+  const g = Math.max(1, Math.min(Number(guests) || 1, rates.maxGuests));
+  const over = Math.max(0, g - rates.baseGuests);
+
   const nights = [];
   for (let d = from; d < to; d = shift(d, 1)) {
-    nights.push({ date: d, price: rateFor(d, rates), season: seasonFor(d, rates)?.name || null });
+    nights.push({
+      date: d,
+      price: nightlyFor(d, g, rates, { direct }),
+      platform: nightlyFor(d, g, rates, { direct: false }),
+      season: seasonFor(d, rates)?.name || null,
+    });
     if (nights.length > 400) break;
   }
 
-  const g = Math.max(1, Math.min(Number(guests) || 1, rates.maxGuests));
-  const over = Math.max(0, g - rates.baseGuests);
-  const extraPerNight = over * rates.extraGuest;
-
-  const accommodation = nights.reduce((s, n) => s + n.price, 0) + extraPerNight * nights.length;
-  const discount = direct ? accommodation * (rates.directDiscount || 0) : 0;
+  const accommodation = nights.reduce((s, n) => s + n.price, 0);
+  const listPrice = nights.reduce((s, n) => s + n.platform, 0);
   const cleaning = nights.length ? (rates.cleaningFee || 0) : 0;
 
   return {
@@ -156,11 +179,11 @@ export function quote(from, to, guests, rates, { direct = true } = {}) {
     extraGuests: over,
     perNight: nights,
     accommodation: round(accommodation),
-    extraGuestTotal: round(extraPerNight * nights.length),
-    discount: round(discount),
+    listPrice: round(listPrice),
+    saving: round(listPrice - accommodation),
     cleaning: round(cleaning),
-    total: round(accommodation - discount + cleaning),
-    avgPerNight: nights.length ? round((accommodation - discount) / nights.length) : 0,
+    total: round(accommodation + cleaning),
+    avgPerNight: nights.length ? round(accommodation / nights.length) : 0,
     currency: rates.currency,
     direct,
   };

@@ -25,6 +25,22 @@ export default async (req) => {
 
   const rates = await readRates();
 
+  // bulk import of the day-by-day pricing sheet
+  if (body.daily && typeof body.daily === 'object') {
+    const daily = {};
+    for (const [date, price] of Object.entries(body.daily)) {
+      if (!ISO.test(date)) return json({ error: 'bad date: ' + date }, 400);
+      const p = num(price, 1, 100000);
+      if (p === null) return json({ error: 'bad price for ' + date }, 400);
+      daily[date] = p;
+    }
+    // replace outright rather than merge: a re-import should drop days the new
+    // sheet no longer lists, not leave stale ones behind
+    rates.daily = body.replace === false ? { ...(rates.daily || {}), ...daily } : daily;
+    await writeRates(rates);
+    return json({ ok: true, days: Object.keys(rates.daily).length });
+  }
+
   // remove a seasonal period
   if (body.remove) {
     rates.periods = (rates.periods || []).filter(p => p.id !== body.remove);

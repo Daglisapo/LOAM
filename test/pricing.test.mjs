@@ -63,33 +63,34 @@ eq('outside the override',      rateFor('2026-09-10', withOverride), 160);
 const platform = (date, guests) => quote(date, shift(date), guests, R, { direct: false });
 function shift(d) { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10); }
 
+/* +15 per head above two, as the 2026-27 plan sets it */
 const tifNight = (g) => quote('2026-09-08', '2026-09-09', g, R, { direct: false }).accommodation;
 eq('TIF 2 guests', tifNight(2), 160);
-eq('TIF 3 guests', tifNight(3), 170);
-eq('TIF 4 guests', tifNight(4), 180);
-eq('TIF 5 guests', tifNight(5), 190);
+eq('TIF 3 guests', tifNight(3), 175);
+eq('TIF 4 guests', tifNight(4), 190);
+eq('TIF 5 guests', tifNight(5), 205);
 
 const febNight = (g) => quote('2027-02-10', '2027-02-11', g, R, { direct: false }).accommodation;
 eq('February 2 guests', febNight(2), 68);
-eq('February 5 guests', febNight(5), 98);
+eq('February 5 guests', febNight(5), 113);
 
-/* direct column: 10% off the accommodation */
-eq('TIF direct, 2 guests',  quote('2026-09-08', '2026-09-09', 2, R).accommodation - quote('2026-09-08', '2026-09-09', 2, R).discount, 144);
-eq('Christmas direct',      quote('2026-12-27', '2026-12-28', 2, R).accommodation - quote('2026-12-27', '2026-12-28', 2, R).discount, 117);
-eq('Easter direct',         quote('2026-04-12', '2026-04-13', 2, R).accommodation - quote('2026-04-12', '2026-04-13', 2, R).discount, 103.5);
+/* the direct price is the platform price less 10%, rounded once */
+eq('TIF direct, 2 guests',  quote('2026-09-08', '2026-09-09', 2, R).accommodation, 144);
+eq('Christmas direct',      quote('2026-12-27', '2026-12-28', 2, R).accommodation, 117);
+eq('Easter direct',         quote('2026-04-12', '2026-04-13', 2, R).accommodation, 104);
 
 /* ---- a whole stay, with cleaning ---- */
 const stay = quote('2026-09-07', '2026-09-10', 4, R);      // 3 nights of TIF, 4 guests
 eq('stay nights',        stay.nights, 3);
-eq('stay accommodation', stay.accommodation, 540);          // (160 + 20) x 3
-eq('stay discount',      stay.discount, 54);                // 10%
-eq('stay cleaning',      stay.cleaning, 35);                // once, not per night
-eq('stay total',         stay.total, 521);                  // 540 - 54 + 35
+eq('stay accommodation', stay.accommodation, 513);          // round(190 x 0.9) x 3
+eq('stay list price',    stay.listPrice, 570);              // (160 + 30) x 3
+eq('stay saving',        stay.saving, 57);
+eq('no cleaning fee',    stay.cleaning, 0);
+eq('stay total',         stay.total, 513);
 
 const platformStay = quote('2026-09-07', '2026-09-10', 4, R, { direct: false });
-eq('platform stay has no discount', platformStay.discount, 0);
-eq('booking direct saves',          round(platformStay.total - stay.total), 54);
-function round(n) { return Math.round(n * 100) / 100; }
+eq('platform stay pays list',   platformStay.total, 570);
+eq('platform stay saves nothing', platformStay.saving, 0);
 
 /* ---- a stay that crosses a season boundary is priced per night ---- */
 const cross = quote('2026-09-12', '2026-09-16', 2, R, { direct: false });  // 12,13 TIF · 14,15 high
