@@ -100,7 +100,8 @@ eq('crossing accommodation', cross.accommodation, 516);
 
 /* ---- guest count is clamped to what the flat sleeps ---- */
 eq('9 guests clamp to 6', quote('2026-07-01', '2026-07-02', 9, R).guests, 6);
-eq('single guest pays base rate', quote('2026-07-01', '2026-07-02', 1, R, { direct: false }).accommodation, 82);
+/* one guest is priced below base occupancy, matching Booking */
+eq('single guest pays base less underGuest', quote('2026-07-01', '2026-07-02', 1, R, { direct: false }).accommodation, 72);
 
 /* ---- cleaning is not charged on an empty range ---- */
 eq('no nights, no cleaning', quote('2026-07-01', '2026-07-01', 2, R).cleaning, 0);
