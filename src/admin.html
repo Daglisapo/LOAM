@@ -16,9 +16,10 @@ h1{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;margin-bo
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
 .card h2{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;margin-bottom:12px}
 label{display:block;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:5px}
-input,button{font:inherit;font-size:15px}
-input{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%;color:var(--ink)}
-input:focus{outline:none;border-color:var(--ochre)}
+input,select,textarea,button{font:inherit;font-size:15px}
+input,select,textarea{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%;color:var(--ink)}
+textarea{resize:vertical;min-height:64px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ochre)}
 button{background:var(--ink);color:var(--paper);border:0;border-radius:999px;padding:10px 20px;cursor:pointer}
 button:hover:not(:disabled){background:var(--ochre)}
 button:disabled{opacity:.45;cursor:default}
@@ -26,6 +27,17 @@ button.ghost{background:none;color:var(--mut);border:1px solid var(--line);paddi
 button.ghost:hover{background:#fff;color:#B44;border-color:#D9A0A0}
 .row{display:grid;grid-template-columns:1fr 1fr 1.4fr auto;gap:10px;align-items:end}
 @media(max-width:680px){.row{grid-template-columns:1fr 1fr}.row .wide{grid-column:1/-1}}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;align-items:end}
+.fields .wide{grid-column:1/-1}
+.fsec{font-family:'Playfair Display',serif;font-size:14.5px;font-weight:600;margin:16px 0 8px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.tw{overflow-x:auto}
+td .ghost{margin:2px 0}
+tr.det td{background:#FBF5E8}
+.det dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px 16px;padding:4px 0}
+.det dt{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.det dd{font-size:14px;word-break:break-word}
+.det a{color:var(--ink)}
 
 /* month grid */
 .g div[data-d]{cursor:pointer;flex-direction:column;gap:0;line-height:1.05;user-select:none;-webkit-user-select:none}
@@ -105,30 +117,65 @@ code{background:#F0E8D8;padding:2px 6px;border-radius:5px;font-size:12.5px;word-
         <div class="spacer"></div>
         <input id="selprice" type="number" min="1" step="1" placeholder="€ / νύχτα">
         <button id="selapply">Εφαρμογή τιμής</button>
+        <button id="selbook" class="ghost">Κράτηση</button>
         <button id="selclear" class="ghost">Άκυρο</button>
         <div class="msg" id="selmsg" style="flex-basis:100%"></div>
       </div>
       <div class="src" id="src"></div>
     </div>
 
-    <div class="card">
-      <h2>Κλείσιμο ημερομηνιών</h2>
+    <div class="card" id="bookcard">
+      <h2 id="booktitle">Νέα κράτηση / κλείσιμο ημερομηνιών</h2>
       <p class="muted" style="margin-top:-4px;margin-bottom:12px">
-        Για απευθείας κρατήσεις ή συντήρηση. Ό,τι κλείνεις εδώ βγαίνει στο feed που διαβάζουν Airbnb και Booking.
+        Οι ημερομηνίες κλείνουν και στο feed που διαβάζουν Airbnb και Booking. Τα στοιχεία του πελάτη
+        <b>δεν</b> βγαίνουν στο feed — φαίνονται μόνο εδώ. Για συντήρηση άφησέ τα κενά.
       </p>
-      <div class="row">
-        <div><label for="s">Από (άφιξη)</label><input id="s" type="date"></div>
-        <div><label for="e">Έως (αναχώρηση)</label><input id="e" type="date"></div>
-        <div class="wide"><label for="n">Σημείωση</label><input id="n" type="text" placeholder="π.χ. Μαρία, 2 άτομα"></div>
-        <div><button id="add">Κλείσιμο</button></div>
+      <div class="fields">
+        <div><label for="s">Άφιξη</label><input id="s" type="date"></div>
+        <div><label for="e">Αναχώρηση</label><input id="e" type="date"></div>
+        <div><label for="garrival">Ώρα άφιξης</label><input id="garrival" type="time"></div>
+        <div><label for="gsource">Πηγή κράτησης</label>
+          <select id="gsource">
+            <option value=""></option><option>Τηλέφωνο</option><option>Email</option><option>Ιστοσελίδα</option>
+            <option>Viber / WhatsApp</option><option>Σύσταση</option><option>Άλλο</option>
+          </select></div>
+      </div>
+
+      <div class="fsec">Πελάτης</div>
+      <div class="fields">
+        <div><label for="gname">Ονοματεπώνυμο</label><input id="gname" type="text" autocomplete="off"></div>
+        <div><label for="gphone">Τηλέφωνο</label><input id="gphone" type="tel" placeholder="+30 69…" autocomplete="off"></div>
+        <div><label for="gemail">Email</label><input id="gemail" type="email" autocomplete="off"></div>
+        <div><label for="gcountry">Χώρα</label><input id="gcountry" type="text" placeholder="π.χ. Ελλάδα"></div>
+        <div><label for="gadults">Ενήλικες</label><input id="gadults" type="number" min="0" max="20" step="1"></div>
+        <div><label for="gchildren">Παιδιά</label><input id="gchildren" type="number" min="0" max="20" step="1"></div>
+        <div><label for="gafm">ΑΦΜ</label><input id="gafm" type="text" inputmode="numeric" autocomplete="off"></div>
+        <div><label for="gid">Ταυτότητα / Διαβατήριο</label><input id="gid" type="text" autocomplete="off"></div>
+      </div>
+
+      <div class="fsec">Πληρωμή</div>
+      <div class="fields">
+        <div><label for="gtotal">Συνολικό ποσό (€)</label><input id="gtotal" type="number" min="0" step="0.01"></div>
+        <div><label for="gdeposit">Προκαταβολή (€)</label><input id="gdeposit" type="number" min="0" step="0.01"></div>
+        <div><label for="gpay">Τρόπος πληρωμής</label>
+          <select id="gpay">
+            <option value=""></option><option>Μετρητά</option><option>Τραπεζική κατάθεση</option>
+            <option>IRIS</option><option>Κάρτα</option><option>Άλλο</option>
+          </select></div>
+        <div class="wide"><label for="n">Σημειώσεις</label><textarea id="n" placeholder="π.χ. έρχονται με αυτοκίνητο, θέλουν βρεφικό κρεβάτι"></textarea></div>
+      </div>
+
+      <div class="actions">
+        <button id="add">Αποθήκευση κράτησης</button>
+        <button id="addcancel" class="ghost" hidden>Ακύρωση επεξεργασίας</button>
       </div>
       <div class="msg" id="addmsg"></div>
     </div>
 
     <div class="card">
       <h2>Κλεισμένα απευθείας</h2>
-      <table><thead><tr><th>Άφιξη</th><th>Αναχώρηση</th><th>Νύχτες</th><th>Σημείωση</th><th></th></tr></thead>
-      <tbody id="rows"></tbody></table>
+      <div class="tw"><table><thead><tr><th>Άφιξη</th><th>Αναχώρηση</th><th>Νύχτες</th><th>Πελάτης</th><th>Άτομα</th><th>Τηλέφωνο</th><th></th></tr></thead>
+      <tbody id="rows"></tbody></table></div>
       <div class="muted" id="empty" hidden>Καμία απευθείας κράτηση ακόμα.</div>
     </div>
 
@@ -306,30 +353,139 @@ function drawMonths(){
   }
 }
 
+/* ---- direct bookings ----
+   Guest details live in b.guest. They come back only from the password-guarded
+   /api/blocks; the public feeds never see them. */
+var BLOCKS = [];
+var EDIT = null;   // id of the booking being edited, or null for a new one
+
+var GFIELDS = {   // form id -> guest key
+  gname: "name", gphone: "phone", gemail: "email", gcountry: "country",
+  gadults: "adults", gchildren: "children", gafm: "afm", gid: "idDoc",
+  garrival: "arrival", gsource: "source", gtotal: "total", gdeposit: "deposit", gpay: "payment"
+};
+var GNUM = { adults: 1, children: 1, total: 1, deposit: 1 };
+
+function people(g){
+  if (!g || (g.adults == null && g.children == null)) return "—";
+  return (g.adults || 0) + (g.children ? " + " + g.children + " παιδ." : "");
+}
+function euro(n){ return n.toLocaleString("el-GR", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + " €"; }
+
+function details(b){
+  var g = b.guest || {};
+  var dl = document.createElement("dl");
+  function item(label, value, href){
+    if (value == null || value === "") return;
+    var box = document.createElement("div");
+    var dt = document.createElement("dt"); dt.textContent = label;
+    var dd = document.createElement("dd");
+    if (href){ var a = document.createElement("a"); a.href = href; a.textContent = value; dd.appendChild(a); }
+    else dd.textContent = value;
+    box.appendChild(dt); box.appendChild(dd);
+    dl.appendChild(box);
+  }
+  item("Ονοματεπώνυμο", g.name);
+  item("Τηλέφωνο", g.phone, g.phone && "tel:" + g.phone.replace(/[^\d+]/g, ""));
+  item("Email", g.email, g.email && "mailto:" + g.email);
+  item("Χώρα", g.country);
+  item("Ενήλικες", g.adults);
+  item("Παιδιά", g.children);
+  item("ΑΦΜ", g.afm);
+  item("Ταυτότητα / διαβατήριο", g.idDoc);
+  item("Ώρα άφιξης", g.arrival);
+  item("Πηγή", g.source);
+  item("Σύνολο", g.total != null ? euro(g.total) : null);
+  item("Προκαταβολή", g.deposit != null ? euro(g.deposit) : null);
+  if (g.total != null) item("Υπόλοιπο", euro(g.total - (g.deposit || 0)));
+  item("Πληρωμή", g.payment);
+  item("Σημειώσεις", b.note);
+  if (!dl.children.length){
+    var e = document.createElement("div"); e.className = "muted"; e.textContent = "Χωρίς στοιχεία πελάτη.";
+    return e;
+  }
+  return dl;
+}
+
 function drawRows(blocks){
+  BLOCKS = blocks;
   var tb = document.getElementById("rows");
   tb.innerHTML = "";
   document.getElementById("empty").hidden = blocks.length > 0;
   blocks.forEach(function(b){
+    var g = b.guest || {};
     var tr = document.createElement("tr");
-    [b.start, b.end, nights(b.start, b.end), b.note || "—"].forEach(function(v){
+    [b.start, b.end, nights(b.start, b.end), g.name || b.note || "—", people(g), g.phone || "—"].forEach(function(v){
       var td = document.createElement("td"); td.textContent = v; tr.appendChild(td);
     });
+
+    var det = document.createElement("tr");
+    det.className = "det"; det.hidden = true;
+    var dtd = document.createElement("td"); dtd.colSpan = 7;
+    dtd.appendChild(details(b)); det.appendChild(dtd);
+
     var td = document.createElement("td");
-    var btn = document.createElement("button");
-    btn.className = "ghost"; btn.textContent = "Άνοιγμα";
-    btn.addEventListener("click", function(){
-      if (!confirm("Να ανοίξουν ξανά οι ημερομηνίες " + b.start + " → " + b.end + ";")) return;
+    function action(label, fn){
+      var btn = document.createElement("button");
+      btn.className = "ghost"; btn.textContent = label;
+      btn.addEventListener("click", function(){ fn(btn); });
+      td.appendChild(btn); td.appendChild(document.createTextNode(" "));
+    }
+    action("Στοιχεία", function(){ det.hidden = !det.hidden; });
+    action("Επεξεργασία", function(){ startEdit(b); });
+    action("Άνοιγμα", function(btn){
+      if (!confirm("Να ανοίξουν ξανά οι ημερομηνίες " + b.start + " → " + b.end + ";\nΘα διαγραφούν και τα στοιχεία του πελάτη.")) return;
       btn.disabled = true;
       api("/api/blocks", { method: "POST", body: JSON.stringify({ remove: b.id }) })
-        .then(function(){ load(); });
+        .then(function(){ if (EDIT === b.id) resetForm(); load(); });
     });
-    td.appendChild(btn); tr.appendChild(td);
+    tr.appendChild(td);
     tb.appendChild(tr);
+    tb.appendChild(det);
   });
 }
 
-/* ---- add ---- */
+/* ---- add / edit ---- */
+function resetForm(){
+  EDIT = null;
+  ["s","e","n"].concat(Object.keys(GFIELDS)).forEach(function(id){ document.getElementById(id).value = ""; });
+  document.getElementById("booktitle").textContent = "Νέα κράτηση / κλείσιμο ημερομηνιών";
+  document.getElementById("add").textContent = "Αποθήκευση κράτησης";
+  document.getElementById("addcancel").hidden = true;
+}
+
+function startEdit(b){
+  resetForm();
+  EDIT = b.id;
+  var g = b.guest || {};
+  document.getElementById("s").value = b.start;
+  document.getElementById("e").value = b.end;
+  document.getElementById("n").value = b.note || "";
+  Object.keys(GFIELDS).forEach(function(id){
+    var v = g[GFIELDS[id]];
+    document.getElementById(id).value = v == null ? "" : v;
+  });
+  document.getElementById("booktitle").textContent = "Επεξεργασία κράτησης " + b.start + " → " + b.end;
+  document.getElementById("add").textContent = "Αποθήκευση αλλαγών";
+  document.getElementById("addcancel").hidden = false;
+  clear(document.getElementById("addmsg"));
+  document.getElementById("bookcard").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+document.getElementById("addcancel").addEventListener("click", function(){
+  resetForm(); clear(document.getElementById("addmsg"));
+});
+
+/* Greek ΑΦΜ: 9 digits, the last a check digit. Anything else is taken as a
+   foreign tax number and stored as typed. */
+function afmOK(v){
+  var d = v.replace(/^(EL|GR)/i, "").replace(/\s/g, "");
+  if (!/^\d+$/.test(d) || d.length !== 9) return true;
+  var sum = 0;
+  for (var i = 0; i < 8; i++) sum += +d[i] * Math.pow(2, 8 - i);
+  return (sum % 11) % 10 === +d[8];
+}
+
 document.getElementById("add").addEventListener("click", function(){
   var s = document.getElementById("s").value;
   var e = document.getElementById("e").value;
@@ -339,13 +495,33 @@ document.getElementById("add").addEventListener("click", function(){
   if (!s || !e) return msg(box, "err", "Συμπλήρωσε και τις δύο ημερομηνίες.");
   if (e <= s)   return msg(box, "err", "Η αναχώρηση πρέπει να είναι μετά την άφιξη.");
 
+  var guest = {};
+  Object.keys(GFIELDS).forEach(function(id){
+    var k = GFIELDS[id], v = document.getElementById(id).value.trim();
+    if (v !== "") guest[k] = GNUM[k] ? +v : v;
+  });
+  var max = RATES && RATES.maxGuests;
+  if (max && (guest.adults || 0) + (guest.children || 0) > max)
+    return msg(box, "err", "Το διαμέρισμα χωράει έως " + max + " άτομα.");
+  if (guest.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.email))
+    return msg(box, "err", "Το email δεν φαίνεται σωστό.");
+  if (guest.afm && !afmOK(guest.afm))
+    return msg(box, "err", "Το ΑΦΜ δεν είναι έγκυρο — έλεγξε τα ψηφία.");
+  if (guest.deposit != null && guest.total != null && guest.deposit > guest.total)
+    return msg(box, "err", "Η προκαταβολή είναι μεγαλύτερη από το σύνολο.");
+
+  var payload = { start: s, end: e, note: n, guest: guest };
+  if (EDIT) payload.update = EDIT;
+  var editing = !!EDIT;
+
   var btn = this; btn.disabled = true;
-  api("/api/blocks", { method: "POST", body: JSON.stringify({ start: s, end: e, note: n }) })
+  api("/api/blocks", { method: "POST", body: JSON.stringify(payload) })
     .then(function(res){
       btn.disabled = false;
       if (!res.ok) return msg(box, "err", res.body.error || "Σφάλμα.");
-      msg(box, "ok", "Κλείστηκε " + s + " → " + e + " (" + nights(s,e) + " νύχτες).");
-      document.getElementById("n").value = "";
+      resetForm();
+      msg(box, "ok", (editing ? "Ενημερώθηκε " : "Κλείστηκε ") + s + " → " + e + " (" + nights(s,e) + " νύχτες)" +
+        (guest.name ? " · " + guest.name : "") + ".");
       load();
     });
 });
@@ -493,6 +669,17 @@ document.getElementById("months").addEventListener("pointerover", function(e){
 document.addEventListener("pointerup", function(){ SEL.dragging = false; });
 
 document.getElementById("selclear").addEventListener("click", clearSel);
+
+document.getElementById("selbook").addEventListener("click", function(){
+  var r = selRange();
+  if (!r) return;
+  if (!EDIT) resetForm();
+  document.getElementById("s").value = r.from;
+  document.getElementById("e").value = addDays(r.to, 1);
+  clearSel();
+  document.getElementById("bookcard").scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("gname").focus({ preventScroll: true });
+});
 
 document.getElementById("selapply").addEventListener("click", function(){
   var box = document.getElementById("selmsg"); clear(box);

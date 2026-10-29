@@ -1,10 +1,12 @@
-import { esc } from '../lib/ical.mjs';
 import { readBlocks } from '../lib/store.mjs';
 
 /* Outbound feed: the dates LOAM has closed directly. Airbnb and Booking.com
    import this URL, which is how a direct booking ends up blocking the OTAs.
    It deliberately contains only our own blocks — re-publishing dates that came
-   *from* Airbnb back *to* Airbnb would be a sync loop. */
+   *from* Airbnb back *to* Airbnb would be a sync loop.
+
+   The feed URL is public, so every event carries the same fixed summary: the
+   host's note and the guest's details stay behind the admin password. */
 
 function stamp(d) {
   return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
@@ -30,7 +32,7 @@ export default async () => {
       `DTSTAMP:${now}`,
       `DTSTART;VALUE=DATE:${b.start.replace(/-/g, '')}`,
       `DTEND;VALUE=DATE:${b.end.replace(/-/g, '')}`,
-      `SUMMARY:${esc(b.note || 'Not available')}`,
+      'SUMMARY:Not available',
       'TRANSP:OPAQUE',
       'END:VEVENT',
     );
