@@ -1,5 +1,5 @@
 import { todayISO } from '../lib/ical.mjs';
-import { readBlocks, writeBlocks, passwordOK } from '../lib/store.mjs';
+import { readBlocks, writeBlocks, passwordOK, readFeedToken, rotateFeedToken } from '../lib/store.mjs';
 
 /* Admin CRUD for manually closed dates. Guarded by ADMIN_PASSWORD; the page
    that calls it also lives behind an unguessable URL, but the password is what
@@ -43,12 +43,18 @@ export default async (req) => {
   if (!passwordOK(req.headers.get('x-loam-key'))) return json({ error: 'unauthorised' }, 401);
 
   if (req.method === 'GET') {
-    return json({ blocks: await readBlocks() });
+    return json({
+      blocks: await readBlocks(),
+      feedToken: (await readFeedToken()) || (await rotateFeedToken()),
+    });
   }
 
   if (req.method === 'POST') {
     let body;
     try { body = await req.json(); } catch { return json({ error: 'bad json' }, 400); }
+
+    // replace the private calendar link
+    if (body.rotateFeed) return json({ ok: true, feedToken: await rotateFeedToken() });
 
     // delete
     if (body.remove) {

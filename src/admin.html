@@ -213,6 +213,25 @@ code{background:#F0E8D8;padding:2px 6px;border-radius:5px;font-size:12.5px;word-
     </div>
 
     <div class="card">
+      <h2>Ημερολόγιο κινητού</h2>
+      <p class="muted" style="margin-top:-4px;margin-bottom:10px">
+        Όλες οι κρατήσεις στο ημερολόγιο του κινητού σου, μαζί με τα στοιχεία πελάτη για τις απευθείας.
+        <b>Ο σύνδεσμος είναι προσωπικός:</b> όποιος τον έχει βλέπει τα στοιχεία των πελατών, οπότε μην τον μοιραστείς.
+      </p>
+      <p><code id="ownerurl"></code></p>
+      <div class="actions">
+        <button id="ownerios">Προσθήκη στο iPhone</button>
+        <button id="ownercopy" class="ghost">Αντιγραφή συνδέσμου</button>
+        <button id="ownerrotate" class="ghost">Νέος σύνδεσμος</button>
+      </div>
+      <p class="muted"><b>iPhone:</b> πάτα «Προσθήκη στο iPhone» από το κινητό και μετά «Εγγραφή». Στις Ρυθμίσεις → Ημερολόγιο → Λογαριασμοί διαλέγεις πόσο συχνά ανανεώνεται.</p>
+      <p class="muted"><b>Android / Google:</b> αντίγραψε τον σύνδεσμο και βάλ' τον στο
+        <a href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl" target="_blank" rel="noopener">Ημερολόγιο Google → Από διεύθυνση URL</a>
+        (ανοίγει από browser, όχι από την εφαρμογή). Η Google τον ανανεώνει όποτε θέλει, συνήθως μέσα σε 8–24 ώρες.</p>
+      <div class="msg" id="ownermsg"></div>
+    </div>
+
+    <div class="card">
       <h2>Feed για Airbnb &amp; Booking</h2>
       <p class="muted" style="margin-top:-4px">Αντίγραψέ το και κάν' το import στις δύο πλατφόρμες, ώστε οι απευθείας κρατήσεις να κλείνουν και εκεί.</p>
       <p style="margin-top:10px"><code id="icsurl"></code></p>
@@ -287,6 +306,7 @@ function load(){
     drawMonths();
     drawSources(av);
     drawRows(bl.blocks || []);
+    drawOwnerFeed(bl.feedToken);
     document.getElementById("status").textContent =
       "Ενημερώθηκε " + (av.updatedAt ? new Date(av.updatedAt).toLocaleString("el-GR") : "—");
   });
@@ -524,6 +544,41 @@ document.getElementById("add").addEventListener("click", function(){
         (guest.name ? " · " + guest.name : "") + ".");
       load();
     });
+});
+
+/* ---- the owner's own calendar ----
+   webcal:// is what makes an iPhone offer to subscribe rather than download. */
+var OWNER_URL = "";
+
+function drawOwnerFeed(token){
+  if (!token) return;
+  OWNER_URL = location.origin + "/api/owner-calendar.ics?token=" + token;
+  document.getElementById("ownerurl").textContent = OWNER_URL;
+}
+
+document.getElementById("ownerios").addEventListener("click", function(){
+  location.href = OWNER_URL.replace(/^https?:/, "webcal:");
+});
+
+document.getElementById("ownercopy").addEventListener("click", function(){
+  var box = document.getElementById("ownermsg"); clear(box);
+  navigator.clipboard.writeText(OWNER_URL).then(function(){
+    msg(box, "ok", "Αντιγράφηκε.");
+  }, function(){
+    msg(box, "err", "Δεν έγινε η αντιγραφή. Επίλεξε τον σύνδεσμο με το χέρι.");
+  });
+});
+
+document.getElementById("ownerrotate").addEventListener("click", function(){
+  if (!confirm("Ο τωρινός σύνδεσμος θα σταματήσει να δουλεύει και θα πρέπει να ξαναπροσθέσεις το ημερολόγιο στο κινητό. Συνέχεια;")) return;
+  var box = document.getElementById("ownermsg"); clear(box);
+  var btn = this; btn.disabled = true;
+  api("/api/blocks", { method: "POST", body: JSON.stringify({ rotateFeed: true }) }).then(function(res){
+    btn.disabled = false;
+    if (!res.ok) return msg(box, "err", res.body.error || "Σφάλμα.");
+    drawOwnerFeed(res.body.feedToken);
+    msg(box, "ok", "Έτοιμος ο νέος σύνδεσμος.");
+  });
 });
 
 /* ---- rates ----

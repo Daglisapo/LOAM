@@ -149,5 +149,24 @@ export function unbookableGaps(busy, from, to, minStayAt) {
 
 /** Escape a text value for output in an .ics file. */
 export function esc(s) {
-  return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  return String(s).replace(/\r\n?/g, '\n').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+}
+
+/** A Date as an iCalendar UTC timestamp. */
+export function stamp(d) {
+  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+
+/** Fold a line to RFC 5545's 75 octets. Greek takes two per letter, so count bytes and never split one. */
+export function fold(line) {
+  const parts = [];
+  let cur = '', size = 0;
+  for (const ch of line) {
+    const n = Buffer.byteLength(ch);
+    if (size + n > 75) { parts.push(cur); cur = ' '; size = 1; }
+    cur += ch;
+    size += n;
+  }
+  parts.push(cur);
+  return parts.join('\r\n');
 }

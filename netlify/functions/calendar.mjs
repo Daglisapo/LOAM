@@ -1,3 +1,4 @@
+import { stamp } from '../lib/ical.mjs';
 import { readBlocks } from '../lib/store.mjs';
 
 /* Outbound feed: the dates LOAM has closed directly. Airbnb and Booking.com
@@ -7,10 +8,6 @@ import { readBlocks } from '../lib/store.mjs';
 
    The feed URL is public, so every event carries the same fixed summary: the
    host's note and the guest's details stay behind the admin password. */
-
-function stamp(d) {
-  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-}
 
 export default async () => {
   const blocks = await readBlocks();

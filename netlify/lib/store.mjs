@@ -1,7 +1,9 @@
+import { randomBytes } from 'node:crypto';
 import { getStore } from '@netlify/blobs';
 
 const BLOCKS = 'blocks.json';
 const CACHE = 'feeds.json';
+const FEED_TOKEN = 'owner-feed-token.json';
 
 function store() {
   return getStore({ name: 'loam-calendar', consistency: 'strong' });
@@ -34,9 +36,25 @@ export async function writeCache(payload) {
   await store().setJSON(CACHE, payload);
 }
 
-/** Constant-time-ish comparison so the admin password cannot be probed by timing. */
+/** The secret in the owner's private calendar link, or null before the first one exists. */
+export async function readFeedToken() {
+  const saved = await store().get(FEED_TOKEN, { type: 'json' });
+  return saved?.token || null;
+}
+
+/** Issue a new link. The old one stops working at once. */
+export async function rotateFeedToken() {
+  const token = randomBytes(24).toString('base64url');
+  await store().setJSON(FEED_TOKEN, { token });
+  return token;
+}
+
 export function passwordOK(given) {
-  const want = process.env.ADMIN_PASSWORD || '';
+  return sameSecret(given, process.env.ADMIN_PASSWORD);
+}
+
+/** Constant-time-ish comparison so a secret cannot be probed by timing. */
+export function sameSecret(given, want) {
   if (!want) return false;
   const a = String(given || '');
   if (a.length !== want.length) return false;

@@ -58,6 +58,15 @@ Booking .ics ─┘                              ↑                            
 deliberately does not re-publish dates read from Airbnb or Booking: feeding a
 platform's own blocks back to it creates a loop those dates never escape.
 
+### The owner's calendar
+
+`/api/owner-calendar.ics` is a second, private feed for the owner's phone: every
+stay from all three sources, each night shown once, with the guest's details on
+direct bookings. A calendar app cannot send a header, so its secret is a random
+token in the URL, stored in Blobs and replaceable from the owner page. If a
+platform feed is failing it answers 503, so the phone keeps its last good copy
+rather than losing those stays.
+
 ### Pricing
 
 `netlify/lib/pricing.mjs` is pure — no storage, no platform — so it can be tested
@@ -85,8 +94,8 @@ index.html              public listing page — 5 languages, gallery, calendar, 
 src/guide.html          guest guide — arrival, house, videos, rules, neighbourhood
 src/admin.html          owner calendar — merged availability, blocks, pricing
 build.mjs               writes the two private pages to their secret paths
-netlify/functions/      availability · sync · blocks · rates · calendar.ics
-netlify/lib/            ical · pricing · rates · store
+netlify/functions/      availability · sync · blocks · rates · calendar.ics · owner-calendar.ics
+netlify/lib/            ical · ownerfeed · pricing · rates · store
 assets/                 photographs and the three guide videos
 ```
 
