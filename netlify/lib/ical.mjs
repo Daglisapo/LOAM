@@ -112,39 +112,39 @@ export async function fetchFeed(url, source, timeoutMs = 10000) {
 }
 
 /**
- * Close the gaps nobody could book anyway.
+ * Find the free runs too short for their own minimum stay.
  *
- * An iCal feed only carries blocks; it says nothing about minimum-stay rules.
- * So a one-night hole between two bookings arrives looking free, while the OTA
- * greys it out because the listing needs at least `minStay` nights. Showing it
- * as available invites a request we would have to refuse.
+ * A two-night hole at Christmas, where the stay must be three, used to be
+ * closed as unbookable. But Airbnb and Booking show those nights as free, and a
+ * direct request is confirmed by hand anyway, so closing them only hid nights
+ * the owner could sell. The hole stays open instead, and its minimum shrinks to
+ * its length: a guest takes all of it, so no single night is left stranded.
  *
- * A free run is only closed when it is walled in on both sides. The open-ended
- * run at the end of the horizon is left alone.
+ * Only a run walled in on both sides counts. The start of the window is a wall;
+ * the open-ended run at the end of the horizon is not.
  *
- * @param {Set<string>} busy   booked nights
+ * @param {Set<string>} busy   nights that cannot be booked
  * @param {string} from        first night to consider
  * @param {string} to          exclusive end of the window
  * @param {function|number} minStayAt  nights required, per date
- * @returns {Set<string>}      nights that are unbookable but not booked
+ * @returns {Map<string,number>}  night -> length of the short run it sits in
  */
-export function unbookableGaps(busy, from, to, minStayAt) {
-  const gaps = new Set();
+export function shortRuns(busy, from, to, minStayAt) {
+  const short = new Map();
   const need = typeof minStayAt === 'function' ? minStayAt : () => minStayAt;
 
   let run = [];
   for (let d = from; d < to; d = addDays(d, 1)) {
     if (busy.has(d)) {
-      // the run just ended against a wall; the start of the window counts as one
       // the run is measured against the rule for the night it starts on
-      if (run.length && run.length < need(run[0])) for (const g of run) gaps.add(g);
+      if (run.length && run.length < need(run[0])) for (const g of run) short.set(g, run.length);
       run = [];
     } else {
       run.push(d);
     }
   }
   // trailing run stays open — the future is not a wall
-  return gaps;
+  return short;
 }
 
 /** Escape a text value for output in an .ics file. */

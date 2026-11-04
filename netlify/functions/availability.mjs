@@ -1,4 +1,4 @@
-import { fetchFeed, nightsOf, toRanges, todayISO, addDays, unbookableGaps } from '../lib/ical.mjs';
+import { fetchFeed, nightsOf, toRanges, todayISO, addDays, shortRuns } from '../lib/ical.mjs';
 import { readBlocks, readCache, writeCache } from '../lib/store.mjs';
 import { readRates, rateFor, minStayFor } from '../lib/rates.mjs';
 
@@ -58,17 +58,20 @@ export default async (req) => {
   const booked = nightsOf(all);
   const rates = await readRates();
 
-  // nights that are free on paper but cannot actually be booked.
-  // The minimum stay travels with the season, so a one-night hole in September
-  // closes against a three-night rule while the same hole in March does not.
+  // free nights inside the advance notice cannot be booked
   const firstBookable = addDays(today, NOTICE_DAYS);
-  const gaps = unbookableGaps(booked, today, limit, d => minStayFor(d, rates));
+  const notice = new Set();
   for (let d = today; d < firstBookable; d = addDays(d, 1)) {
-    if (!booked.has(d)) gaps.add(d);
+    if (!booked.has(d)) notice.add(d);
   }
 
-  const busySet = new Set([...booked, ...gaps]);
+  const busySet = new Set([...booked, ...notice]);
   const busy = [...busySet].sort();
+
+  // A hole between two stays shorter than the season's minimum stays bookable,
+  // whole. The minimum travels with the season, so the same two-night hole needs
+  // shrinking at Christmas and not in March.
+  const short = shortRuns(busySet, today, limit, d => minStayFor(d, rates));
 
   // The platform rate for each bookable night, untouched. The page applies the
   // occupancy surcharge and the discount together, because rounding the two
@@ -77,7 +80,7 @@ export default async (req) => {
   for (let d = firstBookable; d < limit; d = addDays(d, 1)) {
     if (busySet.has(d)) continue;
     prices[d] = rateFor(d, rates);
-    stays[d] = minStayFor(d, rates);
+    stays[d] = short.get(d) ?? minStayFor(d, rates);
   }
 
   return new Response(JSON.stringify({
@@ -99,7 +102,7 @@ export default async (req) => {
     busy,
     ranges: toRanges(busy),
     bySource,
-    unbookable: [...gaps].sort(),
+    unbookable: [...notice].sort(),
   }), {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',

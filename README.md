@@ -46,11 +46,12 @@ Booking .ics ─┘                              ↑                            
 - **`DTEND` is exclusive.** A stay of 10–14 March blocks the nights of the 10th
   to the 13th; the 14th is a checkout and stays bookable. Getting this wrong
   loses a sellable night on every single booking.
-- **iCal carries blocks, not rules.** A one-night gap between two stays arrives
-  looking free, while the platform greys it out because the listing has a
-  two-night minimum. `unbookableGaps()` closes any free run shorter than
-  `MIN_STAY` that is walled in on both sides — leaving the open-ended run at the
-  end of the horizon alone, which would otherwise close the entire future.
+- **iCal carries blocks, not rules.** A two-night hole between two stays at
+  Christmas, where the minimum is three, arrives looking like any free night.
+  Closing such holes hid nights both platforms still show as free, so
+  `shortRuns()` finds them instead and the hole's minimum shrinks to its length:
+  bookable, but only whole. Only runs walled in on both sides count — the
+  open-ended run at the end of the horizon is left alone.
 
 ### The outbound feed
 
