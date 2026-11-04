@@ -40,35 +40,50 @@ eq('a platform stay has no details',
   ownerEvents([], [{ source: 'airbnb', summary: 'Reserved', start: '2026-11-01', end: '2026-11-03' }])[0].description,
   undefined);
 
-/* The same stay arriving three times shows once */
-eq('echoes of a direct booking disappear',
+/* Airbnb closing a date is not a guest */
+eq("Airbnb closing today under a direct guest disappears",
   brief(ownerEvents([direct], [
-    { source: 'airbnb', summary: 'Airbnb (Not available)', start: '2026-12-10', end: '2026-12-14' },
-    { source: 'booking', summary: 'CLOSED - Not available', start: '2026-12-10', end: '2026-12-14' },
+    { source: 'airbnb', summary: 'Airbnb (Not available)', start: '2026-12-11', end: '2026-12-12' },
   ])),
   [['LOAM · Γιώργος Νικολάου · 3 άτομα', '2026-12-10', '2026-12-14']]);
 
-eq('an Airbnb stay echoed on Booking shows once',
-  brief(ownerEvents([], [
-    { source: 'airbnb', summary: 'Reserved', start: '2026-11-01', end: '2026-11-05' },
-    { source: 'booking', summary: 'CLOSED - Not available', start: '2026-11-01', end: '2026-11-05' },
-  ])),
-  [['LOAM · Airbnb', '2026-11-01', '2026-11-05']]);
-
-eq('a Booking stay echoed on Airbnb stays Booking',
+eq('a closed Airbnb date under a Booking stay disappears',
   brief(ownerEvents([], [
     { source: 'airbnb', summary: 'Airbnb (Not available)', start: '2026-11-01', end: '2026-11-05' },
     { source: 'booking', summary: 'CLOSED - Not available', start: '2026-11-01', end: '2026-11-05' },
   ])),
   [['LOAM · Booking.com', '2026-11-01', '2026-11-05']]);
 
-eq('only the unclaimed nights of a longer echo survive',
+eq('only the unclaimed nights of a longer Airbnb closure survive',
   brief(ownerEvents([direct], [
-    { source: 'booking', summary: 'CLOSED - Not available', start: '2026-12-08', end: '2026-12-16' },
+    { source: 'airbnb', summary: 'Airbnb (Not available)', start: '2026-12-08', end: '2026-12-16' },
   ])),
-  [['LOAM · Booking.com', '2026-12-08', '2026-12-10'],
+  [['LOAM · Airbnb (κλειστό)', '2026-12-08', '2026-12-10'],
    ['LOAM · Γιώργος Νικολάου · 3 άτομα', '2026-12-10', '2026-12-14'],
-   ['LOAM · Booking.com', '2026-12-14', '2026-12-16']]);
+   ['LOAM · Airbnb (κλειστό)', '2026-12-14', '2026-12-16']]);
+
+eq('closures are marked so the page can skip their check-out',
+  ownerEvents([], [{ source: 'airbnb', summary: 'Airbnb (Not available)', start: '2026-11-01', end: '2026-11-02' }])[0].closed,
+  true);
+
+/* Two stays on one night are a conflict, and both show */
+eq('Airbnb and Booking on the same nights both show',
+  brief(ownerEvents([], [
+    { source: 'airbnb', summary: 'Reserved', start: '2026-11-01', end: '2026-11-05' },
+    { source: 'booking', summary: 'CLOSED - Not available', start: '2026-11-01', end: '2026-11-05' },
+  ])),
+  [['LOAM · Airbnb', '2026-11-01', '2026-11-05'], ['LOAM · Booking.com', '2026-11-01', '2026-11-05']]);
+
+eq('Booking on top of a direct guest shows both',
+  brief(ownerEvents([direct], [
+    { source: 'booking', summary: 'CLOSED - Not available', start: '2026-12-13', end: '2026-12-15' },
+  ])),
+  [['LOAM · Γιώργος Νικολάου · 3 άτομα', '2026-12-10', '2026-12-14'],
+   ['LOAM · Booking.com', '2026-12-13', '2026-12-15']]);
+
+eq('every event says where it came from',
+  ownerEvents([direct], [{ source: 'booking', summary: 'CLOSED', start: '2026-12-20', end: '2026-12-22' }]).map(e => e.source),
+  ['direct', 'booking']);
 
 eq('back-to-back stays stay separate',
   brief(ownerEvents([], [

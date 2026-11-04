@@ -44,7 +44,7 @@ tr.det td{background:#FBF5E8}
 .g div[data-d] .n{font-size:12px}
 .g div[data-d] .pr{font-size:8.5px;color:var(--mut);letter-spacing:-.02em}
 .g div.past{cursor:default}
-.g div.sel{outline:2px solid var(--ink);outline-offset:-2px;background:#EFE3C8;border-color:var(--ochre)}
+.g div.sel{outline:2px solid var(--ink);outline-offset:-2px;background:#EFE3C8 !important;border-color:var(--ochre)}
 .g div.sel .pr{color:#6E5F45}
 .selbar{position:sticky;bottom:0;z-index:20;margin-top:16px;background:var(--ink);color:#F6F0E4;
   border-radius:14px;padding:14px 16px;display:none;gap:12px;align-items:center;flex-wrap:wrap;
@@ -68,7 +68,7 @@ tr.det td{background:#FBF5E8}
 .g div.airbnb{background:#F2C8C8;border-color:#E5A9A9}
 .g div.booking{background:#C6D4EE;border-color:#A6BBE2}
 .g div.direct{background:#D6E7C8;border-color:#B5D2A0}
-.g div.multi{background:repeating-linear-gradient(45deg,#F2C8C8,#F2C8C8 5px,#C6D4EE 5px,#C6D4EE 10px)}
+.g div.clash{outline:2px solid #B44;outline-offset:-2px}
 .legend{display:flex;flex-wrap:wrap;gap:14px;margin:14px 0 4px;font-size:12.5px;color:var(--ink2)}
 .legend span{display:flex;align-items:center;gap:6px}
 .legend i{width:13px;height:13px;border-radius:4px;display:block;border:1px solid rgba(0,0,0,.12)}
@@ -107,6 +107,8 @@ code{background:#F0E8D8;padding:2px 6px;border-radius:5px;font-size:12.5px;word-
         <span><i style="background:#C6D4EE;border-color:#A6BBE2"></i>Booking.com</span>
         <span><i style="background:#D6E7C8;border-color:#B5D2A0"></i>Απευθείας</span>
         <span><i style="background:#fff"></i>Ελεύθερο</span>
+        <span><i style="background:linear-gradient(135deg,#E5A9A9 0 30%,rgba(36,30,23,.4) 30% 36%,#fff 36%)"></i>Αναχώρηση (έως 11:00)</span>
+        <span><i style="background:repeating-linear-gradient(45deg,#D6E7C8 0 3px,#C6D4EE 3px 6px);outline:2px solid #B44;outline-offset:-2px"></i>Δύο κρατήσεις την ίδια νύχτα</span>
       </div>
       <div class="months" id="months"></div>
       <div class="selbar" id="selbar">
@@ -289,19 +291,20 @@ document.getElementById("key").addEventListener("keydown", function(e){
 });
 
 /* ---- data ---- */
-var BY = { airbnb: new Set(), booking: new Set(), direct: new Set() };
+var STAYS = [];
 var PRICES = {};
 var SEL = { a: null, b: null, dragging: false };
 
 function load(){
-  Promise.all([
-    fetch("/api/availability?refresh=1").then(function(r){ return r.json(); }),
-    api("/api/blocks")
-  ]).then(function(r){
-    var av = r[0], bl = r[1].body;
-    BY.airbnb  = new Set(av.bySource.airbnb  || []);
-    BY.booking = new Set(av.bySource.booking || []);
-    BY.direct  = new Set(av.bySource.direct  || []);
+  // availability first: its refresh rewrites the cached feeds that /api/blocks
+  // builds the stays from
+  var av;
+  fetch("/api/availability?refresh=1").then(function(r){ return r.json(); }).then(function(j){
+    av = j;
+    return api("/api/blocks");
+  }).then(function(res){
+    var bl = res.body;
+    STAYS = bl.stays || [];
     PRICES = av.prices || {};
     drawMonths();
     drawSources(av);
@@ -326,11 +329,58 @@ function drawSources(av){
   });
 }
 
+/* Each cell is painted from the stays, not from a set of busy nights: a
+   check-out day belongs to the guest leaving until 11:00, so the stay that ends
+   there takes the top-left corner and the night takes the rest. The thin line
+   between them keeps a same-platform changeover readable. */
+var COL = { airbnb: "#F2C8C8", booking: "#C6D4EE", direct: "#D6E7C8" };
+var EDGE = { airbnb: "#E5A9A9", booking: "#A6BBE2", direct: "#B5D2A0" };   // the cell borders, so the corner reads on white
+var NAME = { airbnb: "Airbnb", booking: "Booking.com", direct: "Απευθείας" };
+
+function stayIndex(last){
+  var night = {}, out = {};
+  STAYS.forEach(function(s){
+    for (var d = s.start; d < s.end && d <= last; d = addDays(d, 1)) (night[d] = night[d] || []).push(s);
+    if (!s.closed) (out[s.end] = out[s.end] || []).push(s);
+  });
+  return { night: night, out: out };
+}
+
+function label(s){
+  var l = s.title.replace(/^LOAM · /, "");
+  return l.indexOf(NAME[s.source]) === 0 ? l : NAME[s.source] + " · " + l;
+}
+
+function paintCell(cell, key, past, idx){
+  var night = idx.night[key] || [], out = idx.out[key] || [];
+  var bg;
+  if (night.length > 1){
+    var a = COL[night[0].source], b = COL[night[1].source];
+    bg = "repeating-linear-gradient(45deg," + a + " 0 5px," + b + " 5px 10px)";
+    cell.classList.add("clash");
+  } else if (night.length === 1){
+    bg = COL[night[0].source];
+    cell.classList.add(night[0].source);
+  } else {
+    bg = past ? "#F1EADC" : "#fff";
+  }
+  if (out.length){
+    var c = EDGE[out[0].source];
+    bg = "linear-gradient(135deg," + c + " 0 20%,rgba(36,30,23,.4) 20% 23%,transparent 23%)," + bg;
+  }
+  cell.style.background = bg;
+
+  var tip = out.map(function(s){ return "Αναχώρηση έως 11:00 · " + label(s); }).concat(night.map(label));
+  if (night.length > 1) tip.unshift("Προσοχή: δύο κρατήσεις αυτή τη νύχτα");
+  if (tip.length) cell.title = tip.join("\n");
+}
+
 function drawMonths(){
   var host = document.getElementById("months");
   host.innerHTML = "";
   var today = iso(new Date());
   var base = new Date(); base.setDate(1);
+  var idx = stayIndex(addDays(today, 200));
 
   for (var m = 0; m < 6; m++){
     var first = new Date(base.getFullYear(), base.getMonth() + m, 1);
@@ -352,11 +402,9 @@ function drawMonths(){
       var cls = [];
       if (key < today) cls.push("past");
       if (key === today) cls.push("today");
-      var hits = ["airbnb","booking","direct"].filter(function(s){ return BY[s].has(key); });
-      if (hits.length > 1) cls.push("multi");
-      else if (hits.length === 1) cls.push(hits[0]);
       var cell = document.createElement("div");
       cell.className = cls.join(" ");
+      paintCell(cell, key, key < today, idx);
       if (key >= today) cell.dataset.d = key;
       var n = document.createElement("span"); n.className = "n"; n.textContent = d;
       cell.appendChild(n);
@@ -365,7 +413,6 @@ function drawMonths(){
         pr.textContent = PRICES[key] + "€";
         cell.appendChild(pr);
       }
-      if (hits.length) cell.title = hits.join(" + ");
       g.appendChild(cell);
     }
     box.appendChild(g);

@@ -61,8 +61,11 @@ platform's own blocks back to it creates a loop those dates never escape.
 ### The owner's calendar
 
 `/api/owner-calendar.ics` is a second, private feed for the owner's phone: every
-stay from all three sources, each night shown once, with the guest's details on
-direct bookings. A calendar app cannot send a header, so its secret is a random
+stay from all three sources, with the guest's details on direct bookings. Two
+stays on one night are a real conflict and both appear; Airbnb's closed dates
+only fill nights no stay claims, since Airbnb also closes the current day. The
+owner page's month grid is drawn from the same list, so each check-out day can
+show the leaving guest until 11:00. A calendar app cannot send a header, so its secret is a random
 token in the URL, stored in Blobs and replaceable from the owner page. If a
 platform feed is failing it answers 503, so the phone keeps its last good copy
 rather than losing those stays.

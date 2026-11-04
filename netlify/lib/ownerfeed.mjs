@@ -1,15 +1,16 @@
 import { esc, fold, nightsOf, stamp, toRanges } from './ical.mjs';
 
-/* The owner's private calendar, for a phone to subscribe to. Pure, so it can be
-   tested with `node`.
+/* Every stay from the three sources, merged. Feeds the owner's phone calendar
+   and the owner page's month grid. Pure, so it can be tested with `node`.
 
-   The merged view has to show each night once. Airbnb and Booking export dates
-   they imported from each other and from our own feed, so one stay can arrive
-   three times: as a direct booking, as "Airbnb (Not available)" and as "CLOSED"
-   on Booking. Those echoes only keep the nights nothing better has claimed.
+   Neither platform re-exports a calendar it imported: the live feeds carry no
+   direct night in either export and no Airbnb stay in Booking's. So when two
+   stays claim the same night it is a real conflict, and both are kept for the
+   owner to see.
 
-   "Reserved" on Airbnb is always a real guest, so it is never trimmed: if it
-   overlaps something, that is a double booking and the owner should see both. */
+   The exception is Airbnb's "Not available". It is a closed date, not a guest:
+   Airbnb also closes the current day, which lands on top of whoever is in the
+   apartment. Those only fill nights that no stay claims. */
 
 const money = n => n.toLocaleString('el-GR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' €';
 
@@ -44,38 +45,37 @@ function directDetails(b) {
     .join('\n');
 }
 
-const reserved = r => r.source === 'airbnb' && /reserved/i.test(r.summary || '');
+// Booking's export says "CLOSED - Not available" for a guest and for a closed
+// date alike, so every Booking event has to count as a stay.
+const closed = r => r.source === 'airbnb' && !/reserved/i.test(r.summary || '');
+const PLATFORM = { airbnb: 'LOAM · Airbnb', booking: 'LOAM · Booking.com' };
 
-/** Booking first: its "CLOSED" may be a real stay, Airbnb's "Not available" is not. */
-const ECHOES = [
-  { title: 'LOAM · Booking.com', match: r => r.source === 'booking' },
-  { title: 'LOAM · Airbnb (κλειστό)', match: r => r.source === 'airbnb' && !reserved(r) },
-];
-
-/** One entry per stay: direct bookings, then Airbnb stays, then what is left of the echoes. */
+/** One entry per stay, plus whatever Airbnb has closed that no stay covers. */
 export function ownerEvents(blocks, ranges) {
   const events = blocks.map(b => ({
     uid: b.id,
+    source: 'direct',
     start: b.start,
     end: b.end,
     title: directTitle(b),
     description: directDetails(b),
   }));
 
-  const stays = ranges.filter(reserved);
+  const stays = ranges.filter(r => !closed(r));
   for (const r of stays) {
-    events.push({ uid: `airbnb-${r.start}`, start: r.start, end: r.end, title: 'LOAM · Airbnb' });
+    events.push({ uid: `${r.source}-${r.start}`, source: r.source, start: r.start, end: r.end, title: PLATFORM[r.source] });
   }
 
   const taken = nightsOf([...blocks, ...stays]);
-  for (const { title, match } of ECHOES) {
-    for (const r of ranges.filter(match)) {
-      const free = [...nightsOf([r])].filter(d => !taken.has(d));
-      for (const part of toRanges(free)) {
-        events.push({ uid: `${r.source}-${part.start}`, start: part.start, end: part.end, title });
-      }
-      for (const d of free) taken.add(d);
+  for (const r of ranges.filter(closed)) {
+    const free = [...nightsOf([r])].filter(d => !taken.has(d));
+    for (const part of toRanges(free)) {
+      events.push({
+        uid: `airbnb-${part.start}`, source: 'airbnb', closed: true,
+        start: part.start, end: part.end, title: 'LOAM · Airbnb (κλειστό)',
+      });
     }
+    for (const d of free) taken.add(d);
   }
   return events.sort((a, b) => a.start.localeCompare(b.start));
 }

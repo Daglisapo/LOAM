@@ -1,5 +1,6 @@
 import { todayISO } from '../lib/ical.mjs';
-import { readBlocks, writeBlocks, passwordOK, readFeedToken, rotateFeedToken } from '../lib/store.mjs';
+import { ownerEvents } from '../lib/ownerfeed.mjs';
+import { readBlocks, writeBlocks, readCache, passwordOK, readFeedToken, rotateFeedToken } from '../lib/store.mjs';
 
 /* Admin CRUD for manually closed dates. Guarded by ADMIN_PASSWORD; the page
    that calls it also lives behind an unguessable URL, but the password is what
@@ -43,8 +44,15 @@ export default async (req) => {
   if (!passwordOK(req.headers.get('x-loam-key'))) return json({ error: 'unauthorised' }, 401);
 
   if (req.method === 'GET') {
+    const blocks = await readBlocks();
+    const cache = await readCache();
+    // one entry per stay, so the month grid can mark each check-out on its own
+    // even when two guests of the same platform change over on one day
+    const stays = ownerEvents(blocks, cache?.ranges || [])
+      .map(({ source, start, end, title, closed }) => ({ source, start, end, title, closed: !!closed }));
     return json({
-      blocks: await readBlocks(),
+      blocks,
+      stays,
       feedToken: (await readFeedToken()) || (await rotateFeedToken()),
     });
   }
