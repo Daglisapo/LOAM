@@ -111,6 +111,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
 tr.click{cursor:pointer}
 tr.click:hover td{background:#FBF5E8}
 tr.total td{font-weight:600;border-top:2px solid var(--line)}
+tr.month td{background:#EFE5D0;border-top:14px solid var(--card);border-bottom:1px solid #DDCFB2;padding:9px 10px}
+tr.month:first-child td{border-top:0}
+tr.month .mname{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;margin-right:12px}
+tr.month .msum{font-size:12.5px;color:var(--ink2)}
 tr.dim td{color:#B9AE9A}
 tr.det .edit{padding:6px 0}
 .filebtn{position:relative;overflow:hidden;display:inline-block}
@@ -978,6 +982,7 @@ document.getElementById("tabbtn-fin").addEventListener("click", function(){ show
 /* ---- the books ---- */
 var LED = null, FYEAR = null, OPEN = null;
 var MON = ["Ιαν","Φεβ","Μαρ","Απρ","Μάι","Ιουν","Ιουλ","Αυγ","Σεπ","Οκτ","Νοε","Δεκ"];
+var MONTH_NAME = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
 var SRC_COL = { direct: "#9DC285", airbnb: "#E08F8F", booking: "#8EA8DB" };
 
 function el(tag, props, kids){
@@ -1283,7 +1288,28 @@ function drawReservations(){
   var tb = document.getElementById("rrows");
   tb.innerHTML = "";
   document.getElementById("rempty").hidden = list.length > 0;
+
+  // a heading for each month the stays begin in, with that month's totals, so
+  // the list reads as months rather than one long run of dates
+  var groups = {};
   list.forEach(function(v){
+    var m = v.start.slice(0, 7), s = groups[m] || (groups[m] = { stays: 0, nights: 0, gross: 0, net: 0 });
+    if (counts(v)){ s.stays++; s.nights += v.nights; }
+    if (counts(v) || earns(v)){ s.gross += v.gross || 0; s.net += v.net || 0; }
+  });
+  var shown = null;
+
+  list.forEach(function(v){
+    var m = v.start.slice(0, 7);
+    if (m !== shown){
+      shown = m;
+      var s = groups[m];
+      tb.appendChild(el("tr", { class: "month" }, [el("td", { colspan: "9" }, [
+        el("span", { class: "mname", text: MONTH_NAME[+m.slice(5) - 1] + " " + m.slice(0, 4) }),
+        el("span", { class: "msum", text: s.stays + (s.stays === 1 ? " κράτηση · " : " κρατήσεις · ") + s.nights + (s.nights === 1 ? " νύχτα" : " νύχτες") +
+          " · μικτά " + euro(Math.round(s.gross * 100) / 100) + " · καθαρά " + euro(Math.round(s.net * 100) / 100) }),
+      ])]));
+    }
     var g = v.guest || {};
     var tags = [];
     if (v.status === "cancelled") tags.push(el("span", { class: "badge warn", text: earns(v) ? "Ακυρώθηκε · πληρώθηκε " + euro(v.net) : "Ακυρώθηκε" }));
