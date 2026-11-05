@@ -1,5 +1,6 @@
 import { todayISO } from '../lib/ical.mjs';
 import { ownerEvents } from '../lib/ownerfeed.mjs';
+import { cleanGuest } from '../lib/ledger.mjs';
 import { readBlocks, writeBlocks, readCache, passwordOK, readFeedToken, rotateFeedToken } from '../lib/store.mjs';
 
 /* Admin CRUD for manually closed dates. Guarded by ADMIN_PASSWORD; the page
@@ -16,28 +17,7 @@ const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 /* Guest details for a direct booking. They are only ever returned by this
    password-guarded endpoint — calendar.ics and /api/availability are public
-   and must never carry them. */
-const GUEST_TEXT = {
-  name: 80, phone: 30, email: 120, country: 60, afm: 20, idDoc: 30,
-  arrival: 10, source: 30, payment: 30,
-};
-const GUEST_NUM = { adults: [0, 20], children: [0, 20], total: [0, 100000], deposit: [0, 100000] };
-
-function cleanGuest(g) {
-  if (!g || typeof g !== 'object') return null;
-  const out = {};
-  for (const [k, max] of Object.entries(GUEST_TEXT)) {
-    const v = String(g[k] ?? '').trim().slice(0, max);
-    if (v) out[k] = v;
-  }
-  for (const [k, [min, max]] of Object.entries(GUEST_NUM)) {
-    if (g[k] === '' || g[k] == null) continue;
-    const n = Number(g[k]);
-    if (!Number.isFinite(n) || n < min || n > max) throw new Error(`bad ${k}`);
-    out[k] = n;
-  }
-  return Object.keys(out).length ? out : null;
-}
+   and must never carry them. Cleaned by the same rules as the books. */
 
 export default async (req) => {
   // header only — a key in the query string would leak into logs and referrers

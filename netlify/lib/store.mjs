@@ -1,9 +1,11 @@
 import { randomBytes } from 'node:crypto';
 import { getStore } from '@netlify/blobs';
+import { emptyLedger, DEFAULT_SETTINGS } from './ledger.mjs';
 
 const BLOCKS = 'blocks.json';
 const CACHE = 'feeds.json';
 const FEED_TOKEN = 'owner-feed-token.json';
+const LEDGER = 'ledger.json';
 
 function store() {
   return getStore({ name: 'loam-calendar', consistency: 'strong' });
@@ -34,6 +36,24 @@ export async function readCache() {
 
 export async function writeCache(payload) {
   await store().setJSON(CACHE, payload);
+}
+
+/**
+ * The owner's books. Unlike the reads above, a failure here is thrown, not
+ * swallowed: an empty ledger saved over a real one would erase its history.
+ */
+export async function readLedger() {
+  const raw = await store().get(LEDGER, { type: 'json' });
+  if (!raw) return emptyLedger();
+  return {
+    ...emptyLedger(),
+    ...raw,
+    settings: { ...structuredClone(DEFAULT_SETTINGS), ...(raw.settings || {}) },
+  };
+}
+
+export async function writeLedger(ledger) {
+  await store().setJSON(LEDGER, ledger);
 }
 
 /** The secret in the owner's private calendar link, or null before the first one exists. */

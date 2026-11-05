@@ -47,6 +47,8 @@ export function parseICS(text) {
           start: cur.start,
           end: cur.end && cur.end > cur.start ? cur.end : addDays(cur.start, 1),
           summary: cur.summary || '',
+          // Airbnb puts the reservation link and the guest's last four phone digits here
+          ...(cur.description ? { description: cur.description } : {}),
         });
       }
       cur = null;
@@ -62,6 +64,7 @@ export function parseICS(text) {
     if (name === 'DTSTART') cur.start = toDate(value);
     else if (name === 'DTEND') cur.end = toDate(value);
     else if (name === 'SUMMARY') cur.summary = value.replace(/\\,/g, ',').replace(/\\n/gi, ' ').trim();
+    else if (name === 'DESCRIPTION') cur.description = value.replace(/\\n/gi, '\n').replace(/\\([,;\\])/g, '$1').slice(0, 500);
   }
   return out.filter(e => e.start && e.end);
 }

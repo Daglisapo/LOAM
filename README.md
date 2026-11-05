@@ -71,6 +71,29 @@ token in the URL, stored in Blobs and replaceable from the owner page. If a
 platform feed is failing it answers 503, so the phone keeps its last good copy
 rather than losing those stays.
 
+### The books
+
+The owner page has a second tab, *Κρατήσεις & Οικονομικά*: every stay, what it
+earned, and what each month cost, with charts. Neither platform gives a host an
+API, so `netlify/lib/ledger.mjs` fills it from three sides:
+
+- **the feeds** — the sync job records each stay as it appears, with Airbnb's
+  confirmation code read from the event description. Platforms drop past stays
+  from their feeds; the ledger keeps them. A future stay that leaves a feed that
+  answered is marked cancelled.
+- **the exports** — Airbnb's transaction-history CSV and Booking's payment
+  statement CSV, uploaded on the page, previewed, then merged on confirmation
+  code or check-in date. Booking ships its file double-encoded; the reader
+  repairs it. Importing the same file twice changes nothing.
+- **the owner** — tax number, passport, a corrected check-out for a guest who
+  left early. Those corrections survive later imports.
+
+Money is spread over a stay's nights, so a stay across a month boundary counts
+in both. ΤΑΚΚ (the climate resilience fee) is charged per night by season and
+the income tax is an estimate on the rental scale; both rates are settings,
+since they change by law. The ledger is read with errors thrown, not swallowed:
+an empty ledger saved over a real one would erase its history.
+
 ### Pricing
 
 `netlify/lib/pricing.mjs` is pure — no storage, no platform — so it can be tested
@@ -98,8 +121,8 @@ index.html              public listing page — 5 languages, gallery, calendar, 
 src/guide.html          guest guide — arrival, house, videos, rules, neighbourhood
 src/admin.html          owner calendar — merged availability, blocks, pricing
 build.mjs               writes the two private pages to their secret paths
-netlify/functions/      availability · sync · blocks · rates · calendar.ics · owner-calendar.ics
-netlify/lib/            ical · ownerfeed · pricing · rates · store
+netlify/functions/      availability · sync · blocks · rates · ledger · calendar.ics · owner-calendar.ics
+netlify/lib/            ical · ledger · ownerfeed · pricing · rates · store
 assets/                 photographs and the three guide videos
 ```
 

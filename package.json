@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "node build.mjs",
-    "test": "node test/pricing.test.mjs && node test/gaps.test.mjs && node test/ownerfeed.test.mjs"
+    "test": "node test/pricing.test.mjs && node test/gaps.test.mjs && node test/ownerfeed.test.mjs && node test/ledger.test.mjs"
   },
   "license": "MIT",
   "repository": {

@@ -84,6 +84,39 @@ th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);
 code{background:#F0E8D8;padding:2px 6px;border-radius:5px;font-size:12.5px;word-break:break-all}
 .muted{color:var(--mut);font-size:12.5px;margin-top:8px}
 #gate{max-width:360px;margin:60px auto}
+
+/* tabs and the books */
+.tabs{display:flex;gap:4px;margin:2px 0 18px;border-bottom:1px solid var(--line)}
+.tabs button{background:none;color:var(--mut);border-radius:0;padding:10px 14px;border-bottom:2px solid transparent;font-size:15px}
+.tabs button:hover:not(:disabled){background:none;color:var(--ink)}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--ochre);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.kpi .v{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12px;color:var(--mut)}
+.kpi.neg .v{color:#A54545}
+.kpi.warn{border-color:#E0AEAE;background:#FBF1F1}
+.chart{width:100%;height:auto;display:block;margin-top:4px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:12px}
+.toolbar > div{min-width:120px}
+.toolbar .grow{flex:1;min-width:160px}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:#F0E8D8;color:var(--ink2);white-space:nowrap;margin:1px 2px 1px 0}
+.badge.warn{background:#F7E4E4;color:#8A3A3A}
+.badge.ok{background:#E8F0DF;color:#3F5F2C}
+.badge.airbnb{background:#F2C8C8;color:#6E2E2E}
+.badge.booking{background:#C6D4EE;color:#2C4370}
+.badge.direct{background:#D6E7C8;color:#3F5F2C}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.click{cursor:pointer}
+tr.click:hover td{background:#FBF5E8}
+tr.total td{font-weight:600;border-top:2px solid var(--line)}
+tr.dim td{color:#B9AE9A}
+tr.det .edit{padding:6px 0}
+.filebtn{position:relative;overflow:hidden;display:inline-block}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.preview{background:#FBF5E8;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0}
+.expgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 </style></head><body>
 
 <div class="wrap">
@@ -99,6 +132,13 @@ code{background:#F0E8D8;padding:2px 6px;border-radius:5px;font-size:12.5px;word-
   <div id="app" hidden>
     <h1>Ημερολόγιο κρατήσεων</h1>
     <div class="sub" id="status">Φόρτωση…</div>
+
+    <div class="tabs" role="tablist">
+      <button id="tabbtn-cal" class="on" role="tab">Ημερολόγιο</button>
+      <button id="tabbtn-fin" role="tab">Κρατήσεις &amp; Οικονομικά</button>
+    </div>
+
+    <div id="tab-cal">
 
     <div class="card">
       <h2>Επόμενοι 6 μήνες</h2>
@@ -238,6 +278,107 @@ code{background:#F0E8D8;padding:2px 6px;border-radius:5px;font-size:12.5px;word-
       <p class="muted" style="margin-top:-4px">Αντίγραψέ το και κάν' το import στις δύο πλατφόρμες, ώστε οι απευθείας κρατήσεις να κλείνουν και εκεί.</p>
       <p style="margin-top:10px"><code id="icsurl"></code></p>
     </div>
+    </div>
+
+    <div id="tab-fin" hidden>
+      <div class="card">
+        <div class="toolbar">
+          <div><label for="fyear">Έτος</label><select id="fyear"></select></div>
+          <div class="grow muted" id="fnote" style="margin:0 0 10px"></div>
+        </div>
+        <div class="kpis" id="kpis"></div>
+      </div>
+
+      <div class="card">
+        <h2>Καθαρά έσοδα &amp; κέρδος ανά μήνα</h2>
+        <div id="chartIncome"></div>
+        <div class="legend">
+          <span><i style="background:#9DC285"></i>Απευθείας</span>
+          <span><i style="background:#E08F8F"></i>Airbnb</span>
+          <span><i style="background:#8EA8DB"></i>Booking.com</span>
+          <span><i style="background:#241E17;height:3px;border:0"></i>Κέρδος μετά από έξοδα, ΤΑΚΚ &amp; φόρο</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Πληρότητα ανά μήνα</h2>
+        <div id="chartOcc"></div>
+      </div>
+
+      <div class="card">
+        <h2>Ανά μήνα</h2>
+        <div class="tw"><table id="mtable"></table></div>
+      </div>
+
+      <div class="card">
+        <h2>Έξοδα</h2>
+        <div class="toolbar">
+          <div><label for="emonth">Μήνας</label><select id="emonth"></select></div>
+          <div><button id="ecopy" class="ghost">Αντιγραφή παγίων από τον προηγούμενο μήνα</button></div>
+        </div>
+        <div class="expgrid" id="efixed"></div>
+        <div class="fsec">Έκτακτα</div>
+        <div class="tw"><table><tbody id="eextra"></tbody></table></div>
+        <div class="fields" style="margin-top:10px">
+          <div><label for="xcat">Τι</label><input id="xcat" type="text" placeholder="π.χ. Καινούργιο πάπλωμα"></div>
+          <div><label for="xamt">Ποσό (€)</label><input id="xamt" type="number" min="0" step="0.01"></div>
+          <div><label for="xnote">Σημείωση</label><input id="xnote" type="text"></div>
+          <div><button id="xadd">+ Προσθήκη</button></div>
+        </div>
+        <p class="muted" id="eauto"></p>
+        <div class="msg" id="emsg"></div>
+      </div>
+
+      <div class="card">
+        <h2>Κρατήσεις</h2>
+        <div class="toolbar">
+          <div><label for="rsrc">Πηγή</label>
+            <select id="rsrc"><option value="">Όλες</option><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option><option value="direct">Απευθείας</option></select></div>
+          <div><label for="ryear">Έτος</label><select id="ryear"></select></div>
+          <div class="grow"><label for="rq">Αναζήτηση</label><input id="rq" type="search" placeholder="όνομα, κωδικός, τηλέφωνο, ΑΦΜ"></div>
+          <div><label><input id="rtodo" type="checkbox" style="width:auto"> Μόνο εκκρεμότητες</label></div>
+        </div>
+        <div class="actions" style="margin-top:0;margin-bottom:10px">
+          <span class="filebtn"><button tabindex="-1">Εισαγωγή αρχείου</button><input id="rfile" type="file" accept=".csv,text/csv"></span>
+          <button id="rnew" class="ghost">+ Κράτηση πλατφόρμας</button>
+          <button id="rexport" class="ghost">Εξαγωγή CSV</button>
+          <button id="rtemplate" class="ghost">Πρότυπο CSV</button>
+        </div>
+        <p class="muted" style="margin-top:0">Δέχεται το CSV συναλλαγών του Airbnb (Κέρδη → Ιστορικό συναλλαγών), το CSV καταστάσεων του Booking (Οικονομικά) και το πρότυπο του LOAM. Πρώτα βλέπεις τι θα αλλάξει.</p>
+        <div id="rnewbox" class="preview" hidden>
+          <div class="fields">
+            <div><label for="nsrc">Πλατφόρμα</label><select id="nsrc"><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option></select></div>
+            <div><label for="nstart">Άφιξη</label><input id="nstart" type="date"></div>
+            <div><label for="nend">Αναχώρηση</label><input id="nend" type="date"></div>
+            <div><button id="ncreate">Δημιουργία</button></div>
+          </div>
+        </div>
+        <div id="rpreview" class="preview" hidden></div>
+        <div class="msg" id="rmsg2"></div>
+        <div class="tw"><table><thead><tr><th>Άφιξη</th><th>Αναχώρηση</th><th class="num">Νύχτες</th><th>Πηγή</th><th>Επισκέπτης</th><th class="num">Μικτά</th><th class="num">Καθαρά</th><th>ΑΑΔΕ</th><th></th></tr></thead>
+        <tbody id="rrows"></tbody></table></div>
+        <div class="muted" id="rempty" hidden>Καμία κράτηση με αυτά τα φίλτρα.</div>
+      </div>
+
+      <div class="card">
+        <h2>Ρυθμίσεις υπολογισμών</h2>
+        <p class="muted" style="margin-top:-4px;margin-bottom:12px">Ο φόρος είναι <b>εκτίμηση</b> με την κλίμακα ενοικίων· το τελικό ποσό το βγάζει ο λογιστής.</p>
+        <div class="fields">
+          <div><label for="stakkh">ΤΑΚΚ Απρ–Οκτ (€/νύχτα)</label><input id="stakkh" type="number" min="0" step="0.5"></div>
+          <div><label for="stakkl">ΤΑΚΚ Νοε–Μαρ (€/νύχτα)</label><input id="stakkl" type="number" min="0" step="0.5"></div>
+          <div><label for="sbase">Φόρος επί</label><select id="sbase"><option value="gross">Μικτών (ό,τι πλήρωσε ο πελάτης)</option><option value="net">Καθαρών (μετά την προμήθεια)</option></select></div>
+        </div>
+        <div class="fields" id="sbrackets" style="margin-top:10px"></div>
+        <div class="fields" style="margin-top:10px">
+          <div class="wide"><label for="scats">Πάγιες κατηγορίες εξόδων (χωρισμένες με κόμμα)</label><input id="scats" type="text"></div>
+        </div>
+        <div class="actions">
+          <button id="ssave">Αποθήκευση</button>
+          <button id="sbackup" class="ghost">Λήψη αντιγράφου ασφαλείας</button>
+        </div>
+        <div class="msg" id="smsg"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -274,6 +415,9 @@ function unlock(k){
     document.getElementById("app").hidden = false;
     document.getElementById("icsurl").textContent = location.origin + "/api/calendar.ics";
     loadRates();
+    var tab = null;
+    try { tab = sessionStorage.getItem("loam_tab"); } catch(e){}
+    if (tab === "fin") showTab("fin");
     return true;
   });
 }
@@ -814,6 +958,534 @@ document.getElementById("selapply").addEventListener("click", function(){
     document.getElementById("e").min = addDays(this.value || t, 1);
   });
 })();
+
+/* ---- tabs ----
+   The books sit beside the calendar on the same page and behind the same
+   password. They reload on every visit: a booking added in the calendar tab
+   changes them. */
+function showTab(t){
+  document.getElementById("tab-cal").hidden = t !== "cal";
+  document.getElementById("tab-fin").hidden = t !== "fin";
+  document.getElementById("tabbtn-cal").classList.toggle("on", t === "cal");
+  document.getElementById("tabbtn-fin").classList.toggle("on", t === "fin");
+  try { sessionStorage.setItem("loam_tab", t); } catch(e){}
+  if (t === "fin") loadLedger();
+}
+document.getElementById("tabbtn-cal").addEventListener("click", function(){ showTab("cal"); });
+document.getElementById("tabbtn-fin").addEventListener("click", function(){ showTab("fin"); });
+
+/* ---- the books ---- */
+var LED = null, FYEAR = null, OPEN = null;
+var MON = ["Ιαν","Φεβ","Μαρ","Απρ","Μάι","Ιουν","Ιουλ","Αυγ","Σεπ","Οκτ","Νοε","Δεκ"];
+var SRC_COL = { direct: "#9DC285", airbnb: "#E08F8F", booking: "#8EA8DB" };
+
+function el(tag, props, kids){
+  var e = document.createElement(tag);
+  for (var k in (props || {})){
+    var v = props[k];
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k === "text") e.textContent = v;
+    else if (k.slice(0, 2) === "on") e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  (kids || []).forEach(function(c){ if (c != null) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+  return e;
+}
+function eu(n){ return Math.round(n || 0).toLocaleString("el-GR") + " €"; }
+function dmy(s){ var p = s.split("-"); return p[2] + "/" + p[1] + "/" + p[0].slice(2); }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
+function counts(v){ return v.status === "ok" && !v.ignored; }
+
+function loadLedger(){
+  return api("/api/ledger").then(function(res){
+    if (!res.ok) return;
+    LED = res.body;
+    drawFin();
+  });
+}
+
+function ledgerPost(body, box){
+  if (box) clear(box);
+  return api("/api/ledger", { method: "POST", body: JSON.stringify(body) }).then(function(res){
+    if (!res.ok){ if (box) msg(box, "err", res.body.error || "Σφάλμα."); return null; }
+    if (res.body.reservations){ LED = Object.assign(LED || {}, res.body); drawFin(); }
+    return res.body;
+  });
+}
+
+function yearsList(){
+  var ys = Object.keys(LED.years || {});
+  var now = LED.today.slice(0, 4);
+  if (ys.indexOf(now) < 0) ys.push(now);
+  return ys.sort().reverse();
+}
+
+function fillSelect(sel, values, labels, keep){
+  var cur = keep != null ? keep : sel.value;
+  sel.innerHTML = "";
+  values.forEach(function(v, i){ sel.appendChild(el("option", { value: v, text: labels ? labels[i] : v })); });
+  if (values.indexOf(cur) >= 0) sel.value = cur;
+}
+
+function drawFin(){
+  var ys = yearsList();
+  if (!FYEAR || ys.indexOf(FYEAR) < 0) FYEAR = LED.today.slice(0, 4);
+  fillSelect(document.getElementById("fyear"), ys, null, FYEAR);
+  fillSelect(document.getElementById("ryear"), [""].concat(ys), ["Όλα"].concat(ys));
+  var months = [];
+  for (var m = 1; m <= 12; m++) months.push(FYEAR + "-" + String(m).padStart(2, "0"));
+  var em = document.getElementById("emonth");
+  var want = em.value && em.value.slice(0, 4) === FYEAR ? em.value
+           : (LED.today.slice(0, 4) === FYEAR ? LED.today.slice(0, 7) : FYEAR + "-12");
+  fillSelect(em, months, months.map(function(x){ return MON[+x.slice(5) - 1] + " " + x.slice(0, 4); }), want);
+
+  var Y = (LED.years || {})[FYEAR];
+  drawKpis(Y);
+  drawIncomeChart(Y);
+  drawOccChart(Y);
+  drawMonthTable(Y);
+  drawExpenses(Y);
+  drawReservations();
+  drawSettings();
+}
+
+document.getElementById("fyear").addEventListener("change", function(){ FYEAR = this.value; drawFin(); });
+
+/* ---- headline figures ---- */
+function pendingDeclarations(){
+  return LED.reservations.filter(function(v){ return counts(v) && v.end <= LED.today && !v.declared; });
+}
+function due(end){
+  var y = +end.slice(0, 4), m = +end.slice(5, 7);
+  return m === 12 ? (y + 1) + "-01-20" : y + "-" + String(m + 1).padStart(2, "0") + "-20";
+}
+
+function drawKpis(Y){
+  var host = document.getElementById("kpis");
+  host.innerHTML = "";
+  var t = Y ? Y.totals : null;
+  function kpi(k, v, s, cls){ host.appendChild(el("div", { class: "kpi " + (cls || "") }, [el("div", { class: "k", text: k }), el("div", { class: "v", text: v }), s ? el("div", { class: "s", text: s }) : null])); }
+  if (!t){ kpi("Έτος " + FYEAR, "—", "Καμία κράτηση ακόμα"); }
+  else {
+    kpi("Μικτά έσοδα", eu(t.gross), "προμήθειες " + eu(t.commission));
+    kpi("Καθαρά έσοδα", eu(t.net), "μετά τις προμήθειες");
+    kpi("Έξοδα", eu(t.expenses), "χωρίς ΤΑΚΚ και φόρο");
+    kpi("ΤΑΚΚ", eu(t.takk), t.nights + " νύχτες");
+    kpi("Φόρος ≈", eu(t.tax), "εκτίμηση");
+    kpi("Κέρδος", eu(t.profit), "καθαρά − έξοδα − ΤΑΚΚ − φόρος", t.profit < 0 ? "neg" : "");
+    kpi("Πληρότητα", Math.round(t.occupancy) + "%", t.nights + " από " + t.days + " νύχτες, από " + MON[t.fromMonth || 0]);
+    kpi("Μέση τιμή", eu(t.adr), "μικτά ανά νύχτα");
+  }
+  var pend = pendingDeclarations();
+  if (pend.length){
+    var first = pend.map(function(v){ return due(v.end); }).sort()[0];
+    kpi("Προς δήλωση ΑΑΔΕ", String(pend.length), "πρώτη προθεσμία " + dmy(first), first < LED.today ? "warn" : "");
+  }
+  var notes = [];
+  if (t && t.missing) notes.push(t.missing + " νύχτες του " + FYEAR + " δεν έχουν ακόμα ποσά — ανέβασε τα αρχεία των πλατφορμών ή συμπλήρωσέ τα στην κράτηση.");
+  var clash = Object.keys(overlaps()).length;
+  if (clash) notes.push(clash + " κρατήσεις επικαλύπτονται — αν κάποιος έφυγε νωρίτερα, διόρθωσε τις πραγματικές ημερομηνίες του.");
+  document.getElementById("fnote").textContent = notes.join(" ");
+}
+
+/* ---- charts: plain SVG, no library ---- */
+function svgOpen(w, h){ return '<svg class="chart" viewBox="0 0 ' + w + " " + h + '" role="img">'; }
+
+function drawIncomeChart(Y){
+  var host = document.getElementById("chartIncome");
+  if (!Y){ host.innerHTML = '<p class="muted">Δεν υπάρχουν δεδομένα για το ' + esc(FYEAR) + ".</p>"; return; }
+  var W = 760, H = 260, L = 52, R = 10, T = 12, B = 26;
+  var ms = Y.months;
+  var top = Math.max.apply(null, ms.map(function(m){ return Math.max(m.net, m.profit); }).concat([100]));
+  var bot = Math.min.apply(null, ms.map(function(m){ return m.profit; }).concat([0]));
+  var step = Math.pow(10, Math.floor(Math.log10((top - bot) / 4 || 1)));
+  var tick = [1, 2, 2.5, 5, 10].map(function(f){ return f * step; }).find(function(s){ return (top - bot) / s <= 5; }) || step * 10;
+  top = Math.ceil(top / tick) * tick; bot = Math.floor(bot / tick) * tick;
+  var y = function(v){ return T + (top - v) / (top - bot) * (H - T - B); };
+  var bw = (W - L - R) / 12;
+  var s = svgOpen(W, H);
+  for (var g = bot; g <= top + 0.001; g += tick){
+    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="' + (g === 0 ? "#B9AE9A" : "#EDE4D3") + '"/>';
+    s += '<text x="' + (L - 6) + '" y="' + (y(g) + 4) + '" font-size="11" text-anchor="end" fill="#8A7C68">' + Math.round(g).toLocaleString("el-GR") + "</text>";
+  }
+  ms.forEach(function(m, i){
+    var x = L + i * bw + bw * 0.18, w = bw * 0.64, base = 0;
+    ["direct", "airbnb", "booking"].forEach(function(k){
+      var v = m.bySource[k].net;
+      if (v <= 0) return;
+      s += '<rect x="' + x + '" y="' + y(base + v) + '" width="' + w + '" height="' + (y(base) - y(base + v)) + '" fill="' + SRC_COL[k] + '" rx="2"><title>' +
+        MON[i] + " · " + ({ direct: "Απευθείας", airbnb: "Airbnb", booking: "Booking.com" })[k] + ": " + eu(v) + "</title></rect>";
+      base += v;
+    });
+    s += '<text x="' + (L + i * bw + bw / 2) + '" y="' + (H - 8) + '" font-size="11" text-anchor="middle" fill="#8A7C68">' + MON[i] + "</text>";
+  });
+  var pts = ms.map(function(m, i){ return (L + i * bw + bw / 2) + "," + y(m.profit); });
+  s += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="#241E17" stroke-width="2"/>';
+  ms.forEach(function(m, i){
+    s += '<circle cx="' + (L + i * bw + bw / 2) + '" cy="' + y(m.profit) + '" r="3.5" fill="' + (m.profit < 0 ? "#B44" : "#241E17") + '"><title>' + MON[i] +
+      " · κέρδος " + eu(m.profit) + " (καθαρά " + eu(m.net) + ", έξοδα " + eu(m.expenses) + ", ΤΑΚΚ " + eu(m.takk) + ", φόρος ≈ " + eu(m.tax) + ")</title></circle>";
+  });
+  host.innerHTML = s + "</svg>";
+}
+
+function drawOccChart(Y){
+  var host = document.getElementById("chartOcc");
+  if (!Y){ host.innerHTML = ""; return; }
+  var W = 760, H = 150, L = 52, R = 10, T = 16, B = 24, bw = (W - L - R) / 12;
+  var y = function(v){ return T + (100 - v) / 100 * (H - T - B); };
+  var s = svgOpen(W, H);
+  [0, 50, 100].forEach(function(g){
+    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="' + (g ? "#EDE4D3" : "#B9AE9A") + '"/>';
+    s += '<text x="' + (L - 6) + '" y="' + (y(g) + 4) + '" font-size="11" text-anchor="end" fill="#8A7C68">' + g + "%</text>";
+  });
+  Y.months.forEach(function(m, i){
+    var x = L + i * bw + bw * 0.22, w = bw * 0.56;
+    if (m.occupancy > 0){
+      s += '<rect x="' + x + '" y="' + y(m.occupancy) + '" width="' + w + '" height="' + (y(0) - y(m.occupancy)) + '" fill="#C9A85A" rx="2"><title>' +
+        MON[i] + ": " + m.nights + "/" + m.days + " νύχτες</title></rect>";
+      s += '<text x="' + (x + w / 2) + '" y="' + (y(m.occupancy) - 4) + '" font-size="10.5" text-anchor="middle" fill="#4A4034">' + Math.round(m.occupancy) + "%</text>";
+    }
+    s += '<text x="' + (L + i * bw + bw / 2) + '" y="' + (H - 7) + '" font-size="11" text-anchor="middle" fill="#8A7C68">' + MON[i] + "</text>";
+  });
+  host.innerHTML = s + "</svg>";
+}
+
+function drawMonthTable(Y){
+  var t = document.getElementById("mtable");
+  t.innerHTML = "";
+  var cols = [["Μήνας"], ["Νύχτες", "nights"], ["Πληρότητα", "occupancy"], ["Μικτά", "gross"], ["Προμήθειες", "commission"],
+              ["Καθαρά", "net"], ["Έξοδα", "expenses"], ["ΤΑΚΚ", "takk"], ["Φόρος ≈", "tax"], ["Κέρδος", "profit"]];
+  t.appendChild(el("thead", null, [el("tr", null, cols.map(function(c, i){ return el("th", { class: i ? "num" : "", text: c[0] }); }))]));
+  var tb = el("tbody");
+  if (!Y){ t.appendChild(tb); return; }
+  function cell(row, k){
+    if (k === "nights") return String(row.nights);
+    if (k === "occupancy") return Math.round(row.occupancy) + "%";
+    return eu(row[k]);
+  }
+  Y.months.forEach(function(m, i){
+    var empty = !m.nights && !m.expenses;
+    tb.appendChild(el("tr", { class: empty ? "dim" : "" }, cols.map(function(c, j){
+      return el("td", { class: j ? "num" : "", text: j ? cell(m, c[1]) : MON[i] });
+    })));
+  });
+  tb.appendChild(el("tr", { class: "total" }, cols.map(function(c, j){ return el("td", { class: j ? "num" : "", text: j ? cell(Y.totals, c[1]) : "Σύνολο" }); })));
+  t.appendChild(tb);
+}
+
+/* ---- expenses ----
+   The fixed categories are one box each per month; leaving a box empty
+   removes that line. Anything else goes in as a one-off with its own name. */
+function monthExpenses(month){ return LED.expenses.filter(function(e){ return e.month === month; }); }
+
+function saveExpense(e){
+  return ledgerPost({ expense: e }, document.getElementById("emsg"));
+}
+
+function drawExpenses(Y){
+  var month = document.getElementById("emonth").value;
+  var list = monthExpenses(month);
+  var cats = LED.settings.categories || [];
+  var fixed = document.getElementById("efixed");
+  fixed.innerHTML = "";
+  cats.forEach(function(c){
+    var line = list.find(function(e){ return e.category === c; });
+    var input = el("input", { type: "number", min: "0", step: "0.01", value: line ? line.amount : "" });
+    input.addEventListener("change", function(){
+      saveExpense({ id: line && line.id, month: month, category: c, amount: this.value });
+    });
+    fixed.appendChild(el("div", null, [el("label", { text: c }), input]));
+  });
+
+  var tb = document.getElementById("eextra");
+  tb.innerHTML = "";
+  list.filter(function(e){ return cats.indexOf(e.category) < 0; }).forEach(function(e){
+    tb.appendChild(el("tr", null, [
+      el("td", { text: e.category }), el("td", { class: "num", text: euro(e.amount) }), el("td", { text: e.note || "" }),
+      el("td", null, [el("button", { class: "ghost", text: "Διαγραφή", onclick: function(){
+        if (confirm("Να διαγραφεί το «" + e.category + "»;")) saveExpense({ id: e.id, month: month, category: e.category, amount: "" });
+      } })]),
+    ]));
+  });
+  if (!tb.children.length) tb.appendChild(el("tr", null, [el("td", { class: "muted", text: "Κανένα έκτακτο έξοδο αυτόν τον μήνα." })]));
+
+  var m = Y ? Y.months[+month.slice(5) - 1] : null;
+  document.getElementById("eauto").textContent = m
+    ? "Υπολογίζονται μόνα τους για τον μήνα: ΤΑΚΚ " + eu(m.takk) + " (" + m.nights + " νύχτες) · φόρος ≈ " + eu(m.tax) + " · προμήθειες πλατφορμών " + eu(m.commission) + "."
+    : "";
+}
+
+document.getElementById("emonth").addEventListener("change", function(){ drawExpenses((LED.years || {})[FYEAR]); });
+
+document.getElementById("xadd").addEventListener("click", function(){
+  var cat = document.getElementById("xcat").value.trim(), amt = document.getElementById("xamt").value;
+  var box = document.getElementById("emsg");
+  if (!cat || !amt) return msg(box, "err", "Γράψε τι ήταν και πόσο κόστισε.");
+  saveExpense({ month: document.getElementById("emonth").value, category: cat, amount: amt, note: document.getElementById("xnote").value })
+    .then(function(r){ if (r){ ["xcat", "xamt", "xnote"].forEach(function(id){ document.getElementById(id).value = ""; }); } });
+});
+
+document.getElementById("ecopy").addEventListener("click", function(){
+  var month = document.getElementById("emonth").value;
+  var y = +month.slice(0, 4), m = +month.slice(5);
+  var prev = m === 1 ? (y - 1) + "-12" : y + "-" + String(m - 1).padStart(2, "0");
+  var have = monthExpenses(month).map(function(e){ return e.category; });
+  var todo = monthExpenses(prev).filter(function(e){ return LED.settings.categories.indexOf(e.category) >= 0 && have.indexOf(e.category) < 0; });
+  var box = document.getElementById("emsg");
+  if (!todo.length) return msg(box, "err", "Δεν υπάρχει κάτι να αντιγραφεί από τον προηγούμενο μήνα.");
+  todo.reduce(function(p, e){ return p.then(function(){ return saveExpense({ month: month, category: e.category, amount: e.amount }); }); }, Promise.resolve())
+    .then(function(){ msg(box, "ok", "Αντιγράφηκαν " + todo.length + " πάγια — διόρθωσε όσα άλλαξαν."); });
+});
+
+/* ---- reservations ---- */
+// two stays on one night: a double booking, or a guest who left early and kept
+// the dates they paid for
+function overlaps(){
+  var list = LED.reservations.filter(counts).sort(function(a, b){ return a.start.localeCompare(b.start); });
+  var hit = {};
+  for (var i = 0; i < list.length; i++){
+    for (var j = i + 1; j < list.length && list[j].start < list[i].end; j++){
+      hit[list[i].key] = list[j]; hit[list[j].key] = list[i];
+    }
+  }
+  return hit;
+}
+
+function srcName(s){ return { airbnb: "Airbnb", booking: "Booking.com", direct: "Απευθείας" }[s] || s; }
+
+function filtered(){
+  var src = document.getElementById("rsrc").value, yr = document.getElementById("ryear").value;
+  var q = document.getElementById("rq").value.trim().toLowerCase(), todo = document.getElementById("rtodo").checked;
+  var clashes = todo ? overlaps() : {};
+  return LED.reservations.filter(function(v){
+    if (src && v.source !== src) return false;
+    if (yr && v.start.slice(0, 4) !== yr && v.end.slice(0, 4) !== yr) return false;
+    if (todo && !(counts(v) && (!v.hasMoney || clashes[v.key] || (v.end <= LED.today && !v.declared)))) return false;
+    if (q){
+      var g = v.guest || {};
+      var hay = [g.name, g.phone, g.phone4, g.email, g.afm, g.idDoc, v.code, v.notes].join(" ").toLowerCase();
+      if (hay.indexOf(q) < 0) return false;
+    }
+    return true;
+  });
+}
+
+function drawReservations(){
+  var list = filtered();
+  var clash = overlaps();
+  var tb = document.getElementById("rrows");
+  tb.innerHTML = "";
+  document.getElementById("rempty").hidden = list.length > 0;
+  list.forEach(function(v){
+    var g = v.guest || {};
+    var tags = [];
+    if (v.status === "cancelled") tags.push(el("span", { class: "badge warn", text: "Ακυρώθηκε" }));
+    if (v.ignored) tags.push(el("span", { class: "badge", text: v.source === "direct" ? "Κλειστό" : "Δεν είναι κράτηση" }));
+    if (counts(v) && !v.hasMoney) tags.push(el("span", { class: "badge warn", text: "Χωρίς ποσά" }));
+    if (clash[v.key]) tags.push(el("span", { class: "badge warn", text: "Επικαλύπτεται", title: "με " + srcName(clash[v.key].source) + " " + dmy(clash[v.key].start) + " → " + dmy(clash[v.key].end) }));
+    var box = el("input", { type: "checkbox", style: "width:auto", title: "Δηλώθηκε στην ΑΑΔΕ" });
+    box.checked = v.declared;
+    box.disabled = !counts(v);
+    box.addEventListener("click", function(e){ e.stopPropagation(); });
+    box.addEventListener("change", function(){ ledgerPost({ update: v.key, declared: this.checked }, document.getElementById("rmsg2")); });
+    var aade = el("td", null, [box, counts(v) && v.end <= LED.today && !v.declared ? el("span", { class: "muted", text: " έως " + dmy(due(v.end)) }) : null]);
+
+    var tr = el("tr", { class: "click" + (counts(v) ? "" : " dim") }, [
+      el("td", { text: dmy(v.start) }), el("td", { text: dmy(v.end) }), el("td", { class: "num", text: String(v.nights) }),
+      el("td", null, [el("span", { class: "badge " + v.source, text: srcName(v.source) })]),
+      el("td", null, [g.name || (g.phone4 ? "τηλ. …" + g.phone4 : "—")].concat(tags.length ? [" "].concat(tags) : [])),
+      el("td", { class: "num", text: v.gross != null ? euro(v.gross) : "—" }),
+      el("td", { class: "num", text: v.net != null ? euro(v.net) : "—" }),
+      aade, el("td", { text: OPEN === v.key ? "▴" : "▾", class: "muted" }),
+    ]);
+    tr.addEventListener("click", function(){ OPEN = OPEN === v.key ? null : v.key; drawReservations(); });
+    tb.appendChild(tr);
+    if (OPEN === v.key) tb.appendChild(el("tr", { class: "det" }, [el("td", { colspan: "9" }, [editor(v)])]));
+  });
+}
+
+["rsrc", "ryear", "rtodo"].forEach(function(id){ document.getElementById(id).addEventListener("change", drawReservations); });
+document.getElementById("rq").addEventListener("input", drawReservations);
+
+function editor(v){
+  var box = document.getElementById("rmsg2");
+  var wrap = el("div", { class: "edit" });
+  var g = v.guest || {};
+  var meta = [srcName(v.source)];
+  if (v.code) meta.push("κωδικός " + v.code);
+  if (g.phone4) meta.push("τηλ. …" + g.phone4);
+  meta.push({ ical: "από το ημερολόγιο της πλατφόρμας", "import": "από αρχείο", manual: "με το χέρι", direct: "απευθείας κράτηση" }[v.origin] || "");
+  wrap.appendChild(el("p", { class: "muted", style: "margin:0 0 8px" }, [meta.join(" · ")]));
+  if (v.source === "airbnb" && v.code && v.origin !== "direct"){
+    wrap.appendChild(el("p", { style: "margin:0 0 10px" }, [el("a", { href: "https://www.airbnb.com/hosting/reservations/details/" + encodeURIComponent(v.code), target: "_blank", rel: "noopener", text: "Άνοιγμα της κράτησης στο Airbnb ↗" })]));
+  }
+  (v.adjustments || []).forEach(function(a){
+    wrap.appendChild(el("p", { class: "muted", style: "margin:0 0 6px" }, [(a.date ? dmy(a.date) + " · " : "") + a.type + ": " + euro(a.amount)]));
+  });
+
+  if (v.source === "direct" && v.blockId){
+    wrap.appendChild(el("p", { class: "muted", text: "Τα στοιχεία των απευθείας κρατήσεων αλλάζουν από το ημερολόγιο." }));
+    wrap.appendChild(el("button", { class: "ghost", text: "Επεξεργασία στο ημερολόγιο", onclick: function(){
+      var b = BLOCKS.find(function(x){ return x.id === v.blockId; });
+      showTab("cal");
+      if (b) startEdit(b);
+    } }));
+    return wrap;
+  }
+
+  var F = {};
+  function field(key, label, type, val, attrs){
+    var i = el("input", Object.assign({ type: type || "text", value: val == null ? "" : val }, attrs || {}));
+    F[key] = i;
+    return el("div", null, [el("label", { text: label }), i]);
+  }
+  var m = v.hasMoney ? { gross: v.gross - (v.adjustments || []).reduce(function(s, a){ return s + (a.gross != null ? a.gross : a.amount); }, 0), commission: v.commission, net: v.net - (v.adjustments || []).reduce(function(s, a){ return s + a.amount; }, 0) } : {};
+  wrap.appendChild(el("div", { class: "fields" }, [
+    field("start", "Άφιξη", "date", v.start), field("end", "Αναχώρηση (πραγματική)", "date", v.end),
+    field("name", "Ονοματεπώνυμο", "text", g.name), field("phone", "Τηλέφωνο", "tel", g.phone), field("email", "Email", "email", g.email),
+    field("country", "Χώρα", "text", g.country), field("adults", "Ενήλικες", "number", g.adults, { min: 0, max: 20 }),
+    field("children", "Παιδιά", "number", g.children, { min: 0, max: 20 }), field("afm", "ΑΦΜ", "text", g.afm),
+    field("idDoc", "Ταυτότητα / Διαβατήριο", "text", g.idDoc),
+    field("gross", "Μικτά (€)", "number", m.gross != null ? Math.round(m.gross * 100) / 100 : "", { step: "0.01", min: 0 }),
+    field("commission", "Προμήθεια (€)", "number", m.commission, { step: "0.01", min: 0 }),
+    field("net", "Καθαρά (€)", "number", m.net != null ? Math.round(m.net * 100) / 100 : "", { step: "0.01" }),
+  ]));
+  var notes = el("textarea", { placeholder: "Σημειώσεις" }); notes.value = v.notes || "";
+  wrap.appendChild(el("div", { class: "fields", style: "margin-top:10px" }, [el("div", { class: "wide" }, [el("label", { text: "Σημειώσεις" }), notes])]));
+  if ((v.adjustments || []).length) wrap.appendChild(el("p", { class: "muted", text: "Τα ποσά εδώ είναι πριν από τις διορθώσεις από πάνω· τα σύνολα του πίνακα τις περιλαμβάνουν." }));
+
+  var actions = el("div", { class: "actions" });
+  actions.appendChild(el("button", { text: "Αποθήκευση", onclick: function(){
+    var guest = {};
+    ["name", "phone", "email", "country", "adults", "children", "afm", "idDoc"].forEach(function(k){ guest[k] = F[k].value.trim(); });
+    if (guest.afm && !afmOK(guest.afm)) return msg(box, "err", "Το ΑΦΜ δεν είναι έγκυρο — έλεγξε τα ψηφία.");
+    var body = { update: v.key, guest: guest, notes: notes.value };
+    if (F.start.value !== v.start || F.end.value !== v.end){
+      if (!F.start.value || !F.end.value || F.end.value <= F.start.value) return msg(box, "err", "Η αναχώρηση πρέπει να είναι μετά την άφιξη.");
+      body.start = F.start.value; body.end = F.end.value;
+    }
+    if (F.gross.value !== "") body.money = { gross: F.gross.value, commission: F.commission.value, net: F.net.value };
+    ledgerPost(body, box).then(function(r){ if (r) msg(box, "ok", "Αποθηκεύτηκε."); });
+  } }));
+  actions.appendChild(el("button", { class: "ghost", text: v.ignored ? "Είναι κράτηση" : "Δεν είναι κράτηση (κλειστές μέρες)", onclick: function(){
+    ledgerPost({ update: v.key, ignored: !v.ignored }, box);
+  } }));
+  if (v.origin === "manual" || v.origin === "import"){
+    actions.appendChild(el("button", { class: "ghost", text: "Διαγραφή", onclick: function(){
+      if (confirm("Να διαγραφεί η κράτηση " + dmy(v.start) + " → " + dmy(v.end) + ";")) ledgerPost({ remove: v.key }, box).then(function(){ OPEN = null; drawReservations(); });
+    } }));
+  }
+  wrap.appendChild(actions);
+  return wrap;
+}
+
+/* ---- import: preview, then save ---- */
+var PENDING = null;
+document.getElementById("rfile").addEventListener("change", function(){
+  var file = this.files[0], input = this;
+  var box = document.getElementById("rmsg2"), pv = document.getElementById("rpreview");
+  if (!file) return;
+  clear(box);
+  file.arrayBuffer().then(function(buf){
+    var text = new TextDecoder("utf-8").decode(buf);
+    input.value = "";
+    return api("/api/ledger", { method: "POST", body: JSON.stringify({ import: text, dryRun: true }) }).then(function(res){
+      if (!res.ok){ pv.hidden = true; return msg(box, "err", res.body.error || "Δεν διαβάστηκε το αρχείο."); }
+      PENDING = text;
+      var r = res.body.report;
+      var kind = { airbnb: "Airbnb", booking: "Booking.com", template: "πρότυπο LOAM" }[res.body.kind];
+      pv.innerHTML = "";
+      pv.appendChild(el("p", { style: "margin:0 0 8px" }, [el("b", { text: file.name }), " (" + kind + "): " + r.added + " νέες, " + r.updated + " ενημερώνονται, " + r.unchanged + " ίδιες."]));
+      var tbl = el("table");
+      r.rows.forEach(function(x){
+        tbl.appendChild(el("tr", { class: x.action === "unchanged" ? "dim" : "" }, [
+          el("td", null, [el("span", { class: "badge " + (x.action === "added" ? "ok" : ""), text: { added: "νέα", updated: "ενημέρωση", unchanged: "ίδια" }[x.action] })]),
+          el("td", { text: srcName(x.source) }), el("td", { text: x.code || "" }),
+          el("td", { text: dmy(x.start) + " → " + dmy(x.end) }), el("td", { text: x.guest }),
+        ]));
+      });
+      pv.appendChild(el("div", { class: "tw" }, [tbl]));
+      pv.appendChild(el("div", { class: "actions" }, [
+        el("button", { text: "Αποθήκευση", disabled: !(r.added + r.updated), onclick: function(){
+          ledgerPost({ import: PENDING }, box).then(function(res2){
+            if (!res2) return;
+            PENDING = null; pv.hidden = true;
+            msg(box, "ok", "Μπήκαν " + res2.report.added + " νέες και ενημερώθηκαν " + res2.report.updated + " κρατήσεις.");
+          });
+        } }),
+        el("button", { class: "ghost", text: "Άκυρο", onclick: function(){ PENDING = null; pv.hidden = true; } }),
+      ]));
+      pv.hidden = false;
+    });
+  });
+});
+
+document.getElementById("rnew").addEventListener("click", function(){
+  var b = document.getElementById("rnewbox"); b.hidden = !b.hidden;
+});
+document.getElementById("ncreate").addEventListener("click", function(){
+  var box = document.getElementById("rmsg2");
+  ledgerPost({ create: { source: document.getElementById("nsrc").value, start: document.getElementById("nstart").value, end: document.getElementById("nend").value } }, box)
+    .then(function(r){ if (!r) return; OPEN = r.key; document.getElementById("rnewbox").hidden = true; drawReservations(); });
+});
+
+/* ---- downloads ---- */
+function download(name, text, type){
+  var a = el("a", { href: URL.createObjectURL(new Blob([text], { type: type })), download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function csvLine(cells){
+  return cells.map(function(c){ c = c == null ? "" : String(c); return /[",\n\r]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(",");
+}
+var TEMPLATE_COLS = ["source","code","checkin","checkout","guest","adults","children","phone","email","country","afm","id_doc","gross","commission","net","notes"];
+
+document.getElementById("rtemplate").addEventListener("click", function(){
+  download("loam-protypo.csv", "﻿" + csvLine(TEMPLATE_COLS) + "\r\n", "text/csv;charset=utf-8");
+});
+document.getElementById("rexport").addEventListener("click", function(){
+  var lines = [csvLine(TEMPLATE_COLS.concat(["nights", "status", "aade_declared"]))];
+  filtered().forEach(function(v){
+    var g = v.guest || {};
+    lines.push(csvLine([v.source, v.code, v.start, v.end, g.name, g.adults, g.children, g.phone, g.email, g.country, g.afm, g.idDoc,
+      v.gross, v.commission, v.net, v.notes, v.nights, v.ignored ? "ignored" : v.status, v.declared ? "yes" : "no"]));
+  });
+  // the BOM makes Excel read the Greek correctly
+  download("loam-kratiseis-" + LED.today + ".csv", "﻿" + lines.join("\r\n") + "\r\n", "text/csv;charset=utf-8");
+});
+document.getElementById("sbackup").addEventListener("click", function(){
+  api("/api/ledger?backup=1").then(function(res){
+    if (res.ok) download("loam-backup-" + LED.today + ".json", JSON.stringify(res.body, null, 2), "application/json");
+  });
+});
+
+/* ---- settings ---- */
+function drawSettings(){
+  var s = LED.settings;
+  document.getElementById("stakkh").value = s.takk.high;
+  document.getElementById("stakkl").value = s.takk.low;
+  document.getElementById("sbase").value = s.tax.base;
+  document.getElementById("scats").value = (s.categories || []).join(", ");
+  var host = document.getElementById("sbrackets");
+  host.innerHTML = "";
+  s.tax.brackets.forEach(function(b, i){
+    var last = i === s.tax.brackets.length - 1;
+    host.appendChild(el("div", null, [el("label", { text: last ? "Πάνω από" : "Κλιμάκιο έως (€)" }),
+      el("input", { type: "number", "data-b": i, "data-k": "upTo", value: last ? (s.tax.brackets[i - 1] || {}).upTo || 0 : b.upTo, disabled: last })]));
+    host.appendChild(el("div", null, [el("label", { text: "Συντελεστής %" }), el("input", { type: "number", "data-b": i, "data-k": "rate", value: b.rate, step: "0.5" })]));
+  });
+}
+document.getElementById("ssave").addEventListener("click", function(){
+  var brackets = LED.settings.tax.brackets.map(function(b, i){
+    var get = function(k){ var x = document.querySelector('#sbrackets input[data-b="' + i + '"][data-k="' + k + '"]'); return x ? x.value : ""; };
+    return { upTo: get("upTo"), rate: get("rate") };
+  });
+  ledgerPost({ settings: {
+    takk: { high: document.getElementById("stakkh").value, low: document.getElementById("stakkl").value },
+    tax: { base: document.getElementById("sbase").value, brackets: brackets },
+    categories: document.getElementById("scats").value.split(","),
+  } }, document.getElementById("smsg")).then(function(r){ if (r) msg(document.getElementById("smsg"), "ok", "Αποθηκεύτηκε."); });
+});
 
 /* resume a session */
 (function(){
