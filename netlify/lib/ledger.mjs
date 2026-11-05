@@ -154,7 +154,7 @@ const BOOKING = {
 
 /** The template for anything typed up by hand, or by Claude from screenshots. */
 export const TEMPLATE = ['source', 'code', 'checkin', 'checkout', 'guest', 'adults', 'children',
-  'phone', 'email', 'country', 'afm', 'id_doc', 'gross', 'commission', 'net', 'notes'];
+  'phone', 'email', 'country', 'afm', 'id_doc', 'gross', 'commission', 'net', 'notes', 'status'];
 
 const isReservation = t => ['κρατηση', 'reservation'].includes(fold(t));
 
@@ -242,7 +242,11 @@ function readTemplate(rows) {
         phone: f('phone'), email: f('email'), country: f('country'), afm: f('afm'), idDoc: f('id_doc'),
       }),
       money: gross == null ? null : { gross, commission, net: num(f('net')) ?? round(gross - commission) },
+      // typed-up totals, after any refund or resolution; not a base to adjust
+      final: true,
       notes: f('notes'),
+      // only a cancellation is stated; an empty column leaves the status alone
+      ...(/cancel|ακυρ/i.test(fold(f('status'))) ? { status: 'cancelled' } : {}),
       adjustments: [],
     });
   }
@@ -270,6 +274,8 @@ export const DEFAULT_SETTINGS = {
   // rental income, 2026 scale; `upTo: null` is the open top bracket
   tax: { base: 'gross', brackets: [{ upTo: 12000, rate: 15 }, { upTo: 24000, rate: 25 }, { upTo: 35000, rate: 35 }, { upTo: null, rate: 45 }] },
   categories: ['Ρεύμα', 'Νερό', 'Internet', 'Κοινόχρηστα', 'Αναλώσιμα'],
+  // whether direct bookings count towards the tax estimate, ΤΑΚΚ and declarations
+  aadeDirect: false,
 };
 
 export function emptyLedger() {
@@ -344,7 +350,12 @@ export function mergeImport(ledger, items, today) {
     if (item.code) rec.code = item.code;
     if (item.status) rec.status = item.status;
     if (rec.origin === 'ical') rec.origin = 'import';
-    if (item.money) rec.money = item.money;
+    if (item.money) {
+      rec.money = item.money;
+      // final totals replace the adjustments an earlier export recorded, or a
+      // refund would be taken off twice
+      if (item.final) delete rec.adjustments;
+    }
     if (item.notes && !rec.notes) rec.notes = item.notes;
     // the platform's spelling of the name wins only until the host corrects it
     if (item.guest) {
@@ -406,6 +417,13 @@ export function ledgerView(ledger, blocks) {
 
 const counts = v => v.status === 'ok' && !v.ignored;
 
+/** A cancelled stay the host was still paid for: money, but no nights, no ΤΑΚΚ. */
+export const earnsOnly = v => v.status === 'cancelled' && !v.ignored && v.hasMoney && !!(v.net || v.gross);
+
+/* Which stays the ΑΑΔΕ figures (tax estimate, ΤΑΚΚ, declarations) cover. The
+   owner chooses whether direct bookings are among them. */
+export const forAade = (v, settings) => v.source !== 'direct' || !!settings.aadeDirect;
+
 export function taxFor(base, brackets) {
   let left = Math.max(0, base), from = 0, tax = 0;
   for (const { upTo, rate } of brackets) {
@@ -428,8 +446,9 @@ const daysIn = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
  */
 export function summarize(view, expenses, settings, today) {
   const years = {};
+  const base = settings.tax.base === 'net' ? 'net' : 'gross';
   const blank = () => ({
-    nights: 0, gross: 0, commission: 0, net: 0, takk: 0, expenses: 0, missing: 0,
+    nights: 0, gross: 0, commission: 0, net: 0, takk: 0, expenses: 0, missing: 0, taxBase: 0,
     bySource: { airbnb: { nights: 0, gross: 0, net: 0 }, booking: { nights: 0, gross: 0, net: 0 }, direct: { nights: 0, gross: 0, net: 0 } },
     byCategory: {},
   });
@@ -438,19 +457,29 @@ export function summarize(view, expenses, settings, today) {
     return years[y].months[m - 1];
   };
 
+  const earn = (row, v, share) => {
+    const src = row.bySource[v.source] || row.bySource.direct;
+    row.gross += v.gross * share; row.commission += v.commission * share; row.net += v.net * share;
+    src.gross += v.gross * share; src.net += v.net * share;
+    if (forAade(v, settings)) row.taxBase += v[base] * share;
+  };
+
   for (const v of view.filter(counts)) {
     const n = v.nights || 1;
+    const aade = forAade(v, settings);
     for (let d = v.start; d < v.end; d = addDays(d, 1)) {
       const y = +d.slice(0, 4), m = +d.slice(5, 7);
       const row = month(y, m);
       row.nights++;
-      row.takk += m >= 4 && m <= 10 ? settings.takk.high : settings.takk.low;
-      const src = row.bySource[v.source] || row.bySource.direct;
-      src.nights++;
+      if (aade) row.takk += m >= 4 && m <= 10 ? settings.takk.high : settings.takk.low;
+      (row.bySource[v.source] || row.bySource.direct).nights++;
       if (!v.hasMoney) { row.missing++; continue; }
-      row.gross += v.gross / n; row.commission += v.commission / n; row.net += v.net / n;
-      src.gross += v.gross / n; src.net += v.net / n;
+      earn(row, v, 1 / n);
     }
+  }
+  // what a cancellation still paid lands in the month the stay would have begun
+  for (const v of view.filter(earnsOnly)) {
+    earn(month(+v.start.slice(0, 4), +v.start.slice(5, 7)), v, 1);
   }
   for (const e of expenses) {
     const row = month(+e.month.slice(0, 4), +e.month.slice(5, 7));
@@ -459,18 +488,17 @@ export function summarize(view, expenses, settings, today) {
   }
 
   for (const [y, data] of Object.entries(years)) {
-    const base = settings.tax.base === 'net' ? 'net' : 'gross';
-    const yearBase = data.months.reduce((s, r) => s + r[base], 0);
+    const yearBase = data.months.reduce((s, r) => s + r.taxBase, 0);
     const tax = taxFor(yearBase, settings.tax.brackets);
     data.months.forEach((r, i) => {
-      for (const k of ['gross', 'commission', 'net', 'takk', 'expenses']) r[k] = round(r[k]);
+      for (const k of ['gross', 'commission', 'net', 'takk', 'expenses', 'taxBase']) r[k] = round(r[k]);
       for (const s of Object.values(r.bySource)) { s.gross = round(s.gross); s.net = round(s.net); }
-      r.tax = yearBase ? round(tax * r[base] / yearBase) : 0;
+      r.tax = yearBase ? round(tax * r.taxBase / yearBase) : 0;
       r.profit = round(r.net - r.expenses - r.takk - r.tax);
       r.days = daysIn(+y, i + 1);
       r.occupancy = round(100 * r.nights / r.days);
     });
-    const t = { nights: 0, gross: 0, commission: 0, net: 0, takk: 0, expenses: 0, tax: 0, profit: 0, missing: 0, days: 0 };
+    const t = { nights: 0, gross: 0, commission: 0, net: 0, takk: 0, expenses: 0, tax: 0, profit: 0, missing: 0, taxBase: 0, days: 0 };
     for (const r of data.months) for (const k of Object.keys(t)) if (k !== 'days') t[k] += r[k];
     for (const k of Object.keys(t)) t[k] = round(t[k]);
     // Occupancy over the months the apartment was let, not the whole year: a

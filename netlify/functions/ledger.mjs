@@ -82,6 +82,7 @@ export default async (req) => {
         if (!rec) return json({ error: 'not found' }, 404);
         if ('declared' in body) rec.declared = !!body.declared;
         if ('ignored' in body) rec.ignored = !!body.ignored;
+        if (body.status === 'ok' || body.status === 'cancelled') rec.status = body.status;
         if ('notes' in body) rec.notes = String(body.notes || '').slice(0, 500);
         // the dates the guest really stayed, when they differ from what was sold
         if (body.start || body.end) {
@@ -158,6 +159,7 @@ export default async (req) => {
           })),
         };
       }
+      if ('aadeDirect' in s) next.aadeDirect = !!s.aadeDirect;
       if (Array.isArray(s.categories)) {
         next.categories = [...new Set(s.categories.map(c => String(c).trim().slice(0, 60)).filter(Boolean))].slice(0, 30);
       }

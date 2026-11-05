@@ -1,6 +1,6 @@
 import {
   readExport, mergeImport, captureStays, ledgerView, summarize, emptyLedger, taxFor,
-  toISO, num, airbnbDetails, declarationDue, parseCSV,
+  toISO, num, airbnbDetails, declarationDue, parseCSV, DEFAULT_SETTINGS,
 } from '../netlify/lib/ledger.mjs';
 import { parseICS } from '../netlify/lib/ical.mjs';
 
@@ -112,7 +112,7 @@ eq('direct bookings join the view', [byKey('direct:b1').gross, byKey('direct:b1'
 eq('a block with no guest and no money is not a stay', byKey('direct:b2').ignored, true);
 
 /* The months */
-const S = { takk: { high: 8, low: 2 }, tax: { base: 'gross', brackets: [{ upTo: 12000, rate: 15 }, { upTo: 24000, rate: 25 }, { upTo: 35000, rate: 35 }, { upTo: null, rate: 45 }] } };
+const S = { aadeDirect: true, takk: { high: 8, low: 2 }, tax: { base: 'gross', brackets: [{ upTo: 12000, rate: 15 }, { upTo: 24000, rate: 25 }, { upTo: 35000, rate: 35 }, { upTo: null, rate: 45 }] } };
 const years = summarize(view, [{ month: '2026-10', category: 'Ρεύμα', amount: 40 }], S);
 const oct = years[2026].months[9], nov = years[2026].months[10];
 eq('a stay across months is split by night', [oct.bySource.direct.nights, nov.bySource.direct.nights], [2, 1]);
@@ -142,6 +142,40 @@ eq('the year counts from the first month with a stay to this one', [span.fromMon
 eq('tax below the first bracket', taxFor(10000, S.tax.brackets), 1500);
 eq('tax across two brackets', taxFor(20000, S.tax.brackets), 3800);
 eq('tax across all four', taxFor(40000, S.tax.brackets), 1800 + 3000 + 3850 + 2250);
+
+/* Direct bookings left out of the ΑΑΔΕ figures, by default */
+const stay = (source, start, end, gross, extra) => ({
+  key: source + start, source, start, end, nights: (Date.parse(end) - Date.parse(start)) / 864e5,
+  status: 'ok', ignored: false, hasMoney: true, gross, commission: 0, net: gross, ...extra,
+});
+const mixed = [stay('direct', '2026-10-01', '2026-10-03', 200), stay('airbnb', '2026-10-05', '2026-10-06', 100)];
+const noDirect = summarize(mixed, [], { ...S, aadeDirect: false })[2026].months[9];
+eq('direct nights pay no ΤΑΚΚ', noDirect.takk, 8);
+eq('direct income is not taxed', [noDirect.taxBase, noDirect.tax], [100, 15]);
+eq('but it is still income', [noDirect.gross, noDirect.nights], [300, 3]);
+const withDirect = summarize(mixed, [], S)[2026].months[9];
+eq('the setting brings them back', [withDirect.takk, withDirect.tax], [24, 45]);
+eq('the default leaves direct bookings out', DEFAULT_SETTINGS.aadeDirect, false);
+
+/* A cancellation that still paid */
+const cancelled = [stay('airbnb', '2026-10-20', '2026-10-30', 220.42, { status: 'cancelled', commission: 148.42, net: 72 })];
+const c = summarize(cancelled, [], S)[2026].months[9];
+eq('its money counts in the month it would have begun', [c.gross, c.net], [220.42, 72]);
+eq('its nights and ΤΑΚΚ do not', [c.nights, c.takk], [0, 0]);
+eq('a cancellation that paid nothing counts for nothing',
+  summarize([stay('booking', '2026-10-01', '2026-10-03', 0, { status: 'cancelled', net: 0 })], [], S)[2026], undefined);
+eq('the template can mark a cancellation',
+  readExport('source,code,checkin,checkout,guest,gross,commission,net,status\nairbnb,HMX,2026-10-20,2026-10-30,L,220.42,148.42,72,ακυρώθηκε\n').items[0].status, 'cancelled');
+
+/* Typed-up totals after an export with a refund */
+const R = emptyLedger();
+mergeImport(R, air.items, '2026-11-05');
+mergeImport(R, readExport('source,code,checkin,checkout,guest,gross,commission,net,status\nairbnb,HMBBBB2222,2026-10-20,2026-10-30,Test Guest,220.42,148.42,72,ακυρώθηκε\n').items, '2026-11-05');
+const rv = ledgerView(R, []).find(v => v.code === 'HMBBBB2222');
+eq('final totals are not adjusted a second time', [rv.gross, rv.net, rv.status], [220.42, 72, 'cancelled']);
+mergeImport(R, air.items, '2026-11-05');
+const rv2 = ledgerView(R, []).find(v => v.code === 'HMBBBB2222');
+eq('the export imported again lands on the same totals', [rv2.gross, rv2.net], [220.42, 72]);
 
 /* AADE */
 eq('declaration due the 20th of the next month', declarationDue('2026-10-25'), '2026-11-20');

@@ -371,6 +371,7 @@ tr.det .edit{padding:6px 0}
         <div class="fields" id="sbrackets" style="margin-top:10px"></div>
         <div class="fields" style="margin-top:10px">
           <div class="wide"><label for="scats">Πάγιες κατηγορίες εξόδων (χωρισμένες με κόμμα)</label><input id="scats" type="text"></div>
+          <div class="wide"><label><input id="sdirect" type="checkbox" style="width:auto"> Οι απευθείας κρατήσεις μετρούν στα ΑΑΔΕ (φόρος, ΤΑΚΚ, δηλώσεις)</label></div>
         </div>
         <div class="actions">
           <button id="ssave">Αποθήκευση</button>
@@ -996,6 +997,10 @@ function eu(n){ return Math.round(n || 0).toLocaleString("el-GR") + " €"; }
 function dmy(s){ var p = s.split("-"); return p[2] + "/" + p[1] + "/" + p[0].slice(2); }
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
 function counts(v){ return v.status === "ok" && !v.ignored; }
+// a cancellation the host was still paid for: money, no nights
+function earns(v){ return v.status === "cancelled" && !v.ignored && v.hasMoney && !!(v.net || v.gross); }
+// covered by the ΑΑΔΕ figures: direct bookings only if the owner says so
+function aade(v){ return (counts(v) || earns(v)) && (v.source !== "direct" || !!LED.settings.aadeDirect); }
 
 function loadLedger(){
   return api("/api/ledger").then(function(res){
@@ -1054,7 +1059,7 @@ document.getElementById("fyear").addEventListener("change", function(){ FYEAR = 
 
 /* ---- headline figures ---- */
 function pendingDeclarations(){
-  return LED.reservations.filter(function(v){ return counts(v) && v.end <= LED.today && !v.declared; });
+  return LED.reservations.filter(function(v){ return aade(v) && v.end <= LED.today && !v.declared; });
 }
 function due(end){
   var y = +end.slice(0, 4), m = +end.slice(5, 7);
@@ -1071,8 +1076,9 @@ function drawKpis(Y){
     kpi("Μικτά έσοδα", eu(t.gross), "προμήθειες " + eu(t.commission));
     kpi("Καθαρά έσοδα", eu(t.net), "μετά τις προμήθειες");
     kpi("Έξοδα", eu(t.expenses), "χωρίς ΤΑΚΚ και φόρο");
-    kpi("ΤΑΚΚ", eu(t.takk), t.nights + " νύχτες");
-    kpi("Φόρος ≈", eu(t.tax), "εκτίμηση");
+    var only = LED.settings.aadeDirect ? "" : " · μόνο Airbnb & Booking";
+    kpi("ΤΑΚΚ", eu(t.takk), "ανά νύχτα" + only);
+    kpi("Φόρος ≈", eu(t.tax), "εκτίμηση" + only);
     kpi("Κέρδος", eu(t.profit), "καθαρά − έξοδα − ΤΑΚΚ − φόρος", t.profit < 0 ? "neg" : "");
     kpi("Πληρότητα", Math.round(t.occupancy) + "%", t.nights + " από " + t.days + " νύχτες, από " + MON[t.fromMonth || 0]);
     kpi("Μέση τιμή", eu(t.adr), "μικτά ανά νύχτα");
@@ -1261,7 +1267,7 @@ function filtered(){
   return LED.reservations.filter(function(v){
     if (src && v.source !== src) return false;
     if (yr && v.start.slice(0, 4) !== yr && v.end.slice(0, 4) !== yr) return false;
-    if (todo && !(counts(v) && (!v.hasMoney || clashes[v.key] || (v.end <= LED.today && !v.declared)))) return false;
+    if (todo && !((counts(v) && (!v.hasMoney || clashes[v.key])) || (aade(v) && v.end <= LED.today && !v.declared))) return false;
     if (q){
       var g = v.guest || {};
       var hay = [g.name, g.phone, g.phone4, g.email, g.afm, g.idDoc, v.code, v.notes].join(" ").toLowerCase();
@@ -1280,16 +1286,16 @@ function drawReservations(){
   list.forEach(function(v){
     var g = v.guest || {};
     var tags = [];
-    if (v.status === "cancelled") tags.push(el("span", { class: "badge warn", text: "Ακυρώθηκε" }));
+    if (v.status === "cancelled") tags.push(el("span", { class: "badge warn", text: earns(v) ? "Ακυρώθηκε · πληρώθηκε " + euro(v.net) : "Ακυρώθηκε" }));
     if (v.ignored) tags.push(el("span", { class: "badge", text: v.source === "direct" ? "Κλειστό" : "Δεν είναι κράτηση" }));
     if (counts(v) && !v.hasMoney) tags.push(el("span", { class: "badge warn", text: "Χωρίς ποσά" }));
     if (clash[v.key]) tags.push(el("span", { class: "badge warn", text: "Επικαλύπτεται", title: "με " + srcName(clash[v.key].source) + " " + dmy(clash[v.key].start) + " → " + dmy(clash[v.key].end) }));
     var box = el("input", { type: "checkbox", style: "width:auto", title: "Δηλώθηκε στην ΑΑΔΕ" });
     box.checked = v.declared;
-    box.disabled = !counts(v);
+    box.disabled = !aade(v);
     box.addEventListener("click", function(e){ e.stopPropagation(); });
     box.addEventListener("change", function(){ ledgerPost({ update: v.key, declared: this.checked }, document.getElementById("rmsg2")); });
-    var aade = el("td", null, [box, counts(v) && v.end <= LED.today && !v.declared ? el("span", { class: "muted", text: " έως " + dmy(due(v.end)) }) : null]);
+    var aadeCell = el("td", null, aade(v) ? [box, v.end <= LED.today && !v.declared ? el("span", { class: "muted", text: " έως " + dmy(due(v.end)) }) : null] : [el("span", { class: "muted", text: "—" })]);
 
     var tr = el("tr", { class: "click" + (counts(v) ? "" : " dim") }, [
       el("td", { text: dmy(v.start) }), el("td", { text: dmy(v.end) }), el("td", { class: "num", text: String(v.nights) }),
@@ -1297,7 +1303,7 @@ function drawReservations(){
       el("td", null, [g.name || (g.phone4 ? "τηλ. …" + g.phone4 : "—")].concat(tags.length ? [" "].concat(tags) : [])),
       el("td", { class: "num", text: v.gross != null ? euro(v.gross) : "—" }),
       el("td", { class: "num", text: v.net != null ? euro(v.net) : "—" }),
-      aade, el("td", { text: OPEN === v.key ? "▴" : "▾", class: "muted" }),
+      aadeCell, el("td", { text: OPEN === v.key ? "▴" : "▾", class: "muted" }),
     ]);
     tr.addEventListener("click", function(){ OPEN = OPEN === v.key ? null : v.key; drawReservations(); });
     tb.appendChild(tr);
@@ -1351,7 +1357,10 @@ function editor(v){
     field("commission", "Προμήθεια (€)", "number", m.commission, { step: "0.01", min: 0 }),
     field("net", "Καθαρά (€)", "number", m.net != null ? Math.round(m.net * 100) / 100 : "", { step: "0.01" }),
   ]));
+  var status = el("select", null, [el("option", { value: "ok", text: "Κανονική" }), el("option", { value: "cancelled", text: "Ακυρώθηκε" })]);
+  status.value = v.status;
   var notes = el("textarea", { placeholder: "Σημειώσεις" }); notes.value = v.notes || "";
+  wrap.appendChild(el("div", { class: "fields", style: "margin-top:10px" }, [el("div", null, [el("label", { text: "Κατάσταση" }), status])]));
   wrap.appendChild(el("div", { class: "fields", style: "margin-top:10px" }, [el("div", { class: "wide" }, [el("label", { text: "Σημειώσεις" }), notes])]));
   if ((v.adjustments || []).length) wrap.appendChild(el("p", { class: "muted", text: "Τα ποσά εδώ είναι πριν από τις διορθώσεις από πάνω· τα σύνολα του πίνακα τις περιλαμβάνουν." }));
 
@@ -1360,7 +1369,7 @@ function editor(v){
     var guest = {};
     ["name", "phone", "email", "country", "adults", "children", "afm", "idDoc"].forEach(function(k){ guest[k] = F[k].value.trim(); });
     if (guest.afm && !afmOK(guest.afm)) return msg(box, "err", "Το ΑΦΜ δεν είναι έγκυρο — έλεγξε τα ψηφία.");
-    var body = { update: v.key, guest: guest, notes: notes.value };
+    var body = { update: v.key, guest: guest, notes: notes.value, status: status.value };
     if (F.start.value !== v.start || F.end.value !== v.end){
       if (!F.start.value || !F.end.value || F.end.value <= F.start.value) return msg(box, "err", "Η αναχώρηση πρέπει να είναι μετά την άφιξη.");
       body.start = F.start.value; body.end = F.end.value;
@@ -1438,17 +1447,17 @@ function download(name, text, type){
 function csvLine(cells){
   return cells.map(function(c){ c = c == null ? "" : String(c); return /[",\n\r]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(",");
 }
-var TEMPLATE_COLS = ["source","code","checkin","checkout","guest","adults","children","phone","email","country","afm","id_doc","gross","commission","net","notes"];
+var TEMPLATE_COLS = ["source","code","checkin","checkout","guest","adults","children","phone","email","country","afm","id_doc","gross","commission","net","notes","status"];
 
 document.getElementById("rtemplate").addEventListener("click", function(){
   download("loam-protypo.csv", "﻿" + csvLine(TEMPLATE_COLS) + "\r\n", "text/csv;charset=utf-8");
 });
 document.getElementById("rexport").addEventListener("click", function(){
-  var lines = [csvLine(TEMPLATE_COLS.concat(["nights", "status", "aade_declared"]))];
+  var lines = [csvLine(TEMPLATE_COLS.concat(["nights", "aade_declared"]))];
   filtered().forEach(function(v){
     var g = v.guest || {};
     lines.push(csvLine([v.source, v.code, v.start, v.end, g.name, g.adults, g.children, g.phone, g.email, g.country, g.afm, g.idDoc,
-      v.gross, v.commission, v.net, v.notes, v.nights, v.ignored ? "ignored" : v.status, v.declared ? "yes" : "no"]));
+      v.gross, v.commission, v.net, v.notes, v.ignored ? "ignored" : v.status, v.nights, v.declared ? "yes" : "no"]));
   });
   // the BOM makes Excel read the Greek correctly
   download("loam-kratiseis-" + LED.today + ".csv", "﻿" + lines.join("\r\n") + "\r\n", "text/csv;charset=utf-8");
@@ -1466,6 +1475,7 @@ function drawSettings(){
   document.getElementById("stakkl").value = s.takk.low;
   document.getElementById("sbase").value = s.tax.base;
   document.getElementById("scats").value = (s.categories || []).join(", ");
+  document.getElementById("sdirect").checked = !!s.aadeDirect;
   var host = document.getElementById("sbrackets");
   host.innerHTML = "";
   s.tax.brackets.forEach(function(b, i){
@@ -1484,6 +1494,7 @@ document.getElementById("ssave").addEventListener("click", function(){
     takk: { high: document.getElementById("stakkh").value, low: document.getElementById("stakkl").value },
     tax: { base: document.getElementById("sbase").value, brackets: brackets },
     categories: document.getElementById("scats").value.split(","),
+    aadeDirect: document.getElementById("sdirect").checked,
   } }, document.getElementById("smsg")).then(function(r){ if (r) msg(document.getElementById("smsg"), "ok", "Αποθηκεύτηκε."); });
 });
 
