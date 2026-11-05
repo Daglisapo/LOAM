@@ -177,6 +177,16 @@ mergeImport(R, air.items, '2026-11-05');
 const rv2 = ledgerView(R, []).find(v => v.code === 'HMBBBB2222');
 eq('the export imported again lands on the same totals', [rv2.gross, rv2.net], [220.42, 72]);
 
+/* A second file that only fills in details */
+const N = emptyLedger();
+mergeImport(N, readExport('source,code,checkin,checkout,guest,gross,commission,net,notes\nbooking,111,2026-10-16,2026-10-18,Guest,168,27.72,140.28,πρώτη σημείωση\n').items, '2026-11-05');
+const extra = readExport('source,code,checkin,checkout,guest,adults,afm,notes\nbooking,111,2026-10-16,2026-10-18,,2,094014201,επαγγελματικό ταξίδι\n').items;
+mergeImport(N, extra, '2026-11-05');
+const nv = ledgerView(N, [])[0];
+eq('details are added and the money kept', [nv.guest.name, nv.guest.adults, nv.guest.afm, nv.net], ['Guest', 2, '094014201', 140.28]);
+eq('a new note is added to the old one', nv.notes, 'πρώτη σημείωση · επαγγελματικό ταξίδι');
+eq('importing it again adds nothing', [mergeImport(N, extra, '2026-11-05').unchanged, ledgerView(N, [])[0].notes.split(' · ').length], [1, 2]);
+
 /* AADE */
 eq('declaration due the 20th of the next month', declarationDue('2026-10-25'), '2026-11-20');
 eq('December rolls into January', declarationDue('2026-12-31'), '2027-01-20');

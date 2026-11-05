@@ -356,7 +356,11 @@ export function mergeImport(ledger, items, today) {
       // refund would be taken off twice
       if (item.final) delete rec.adjustments;
     }
-    if (item.notes && !rec.notes) rec.notes = item.notes;
+    // a second file adds to the notes rather than losing what it says; a note
+    // already there is not repeated, so importing again changes nothing
+    if (item.notes && !(rec.notes || '').includes(item.notes)) {
+      rec.notes = (rec.notes ? rec.notes + ' · ' + item.notes : item.notes).slice(0, 500);
+    }
     // the platform's spelling of the name wins only until the host corrects it
     if (item.guest) {
       const g = rec.guest || {};
