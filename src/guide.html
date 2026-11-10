@@ -71,6 +71,19 @@ main{padding-top:18px;padding-bottom:26px}
 .vplay span:after{content:"";position:absolute;top:50%;left:50%;transform:translate(-38%,-50%);
   border-left:20px solid var(--ink);border-top:13px solid transparent;border-bottom:13px solid transparent}
 .vph{margin:9px 0 4px;border:1.5px dashed var(--tan);background:#F3EBDA;color:var(--mut);border-radius:12px;padding:30px 14px;text-align:center;font-size:13px;font-weight:600}
+
+/* Quick actions: the four things a guest reaches for at the door */
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:12px 0 4px}
+.quick a,.quick button{appearance:none;display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:rgba(243,237,225,.08);border:1px solid rgba(243,237,225,.18);border-radius:12px;
+  color:#F3EDE1;font:inherit;font-weight:600;font-size:12px;padding:9px 4px;cursor:pointer;text-decoration:none}
+.quick a:active,.quick button:active{background:rgba(201,168,94,.3)}
+.quick .qi{font-size:18px;line-height:1}
+.copy{appearance:none;margin-top:10px;background:var(--ink);color:#FBF6EC;border:0;border-radius:999px;
+  font:inherit;font-weight:600;font-size:13.5px;padding:9px 16px;cursor:pointer}
+.copy.done{background:var(--ochre)}
+.card a{color:var(--ochre);font-weight:600}
+.card.flash{box-shadow:0 0 0 2px var(--gold)}
 </style>
 </head>
 <body>
@@ -93,6 +106,7 @@ main{padding-top:18px;padding-bottom:26px}
     </div>
     <h1 id="h1"></h1>
     <div class="sub" id="sub"></div>
+    <div class="quick" id="quick"></div>
     <nav id="nav"></nav>
   </div>
 </header>
@@ -341,7 +355,49 @@ var DATA={
 /* videos live at the site root so the guide slug can be rotated freely */
 var VBASE="../../assets/video/";
 
-var lang=0, tab="arrive";
+var PHONE="+306970893592";
+var MAP="https://www.google.com/maps/search/?api=1&query=Petropoulakidon+3%2C+Thessaloniki+546+35";
+var WIFI="__WIFI_PASSWORD__";
+var Q={
+ wifi:["Wi-Fi","Wi-Fi","WLAN","Wi-Fi","Wi-Fi"],
+ map:["Χάρτης","Map","Karte","Plan","Mappa"],
+ call:["Κλήση","Call","Anrufen","Appeler","Chiama"],
+ copy:["Αντιγραφή κωδικού Wi-Fi","Copy Wi-Fi password","WLAN-Passwort kopieren","Copier le mot de passe Wi-Fi","Copia la password Wi-Fi"],
+ copied:["Αντιγράφηκε ✓","Copied ✓","Kopiert ✓","Copié ✓","Copiata ✓"]
+};
+
+/* A new listing lives on its first reviews, and a returning guest is worth
+   more booked direct — so the last thing in the rules tab asks for both. */
+DATA.rules.push({ic:"⭐",t:["Περάσατε όμορφα;","Enjoyed your stay?","Hat es Ihnen gefallen?","Vous avez aimé ?","Vi siete trovati bene?"],b:[
+ ["Είμαστε καινούργιο κατάλυμα και μια κριτική στην πλατφόρμα όπου κάνατε την κράτηση μάς βοηθά πάρα πολύ — σας ευχαριστούμε εκ των προτέρων.",
+  "We are a new listing, and a review on the platform you booked through helps us enormously — thank you in advance.",
+  "Wir sind eine neue Unterkunft, und eine Bewertung auf der Plattform, über die Sie gebucht haben, hilft uns enorm — vielen Dank im Voraus.",
+  "Nous sommes un nouveau logement, et un avis sur la plateforme où vous avez réservé nous aide énormément — merci d'avance.",
+  "Siamo un alloggio nuovo e una recensione sulla piattaforma dove avete prenotato ci aiuta moltissimo — grazie in anticipo."],
+ ["Την επόμενη φορά κλείστε απευθείας στο <a href=\"https://loamskg.gr/#book\" target=\"_blank\" rel=\"noopener\">loamskg.gr</a>: ίδιο διαμέρισμα, ίδιο ημερολόγιο, <b>10% χαμηλότερη τιμή</b>.",
+  "Next time, book direct at <a href=\"https://loamskg.gr/#book\" target=\"_blank\" rel=\"noopener\">loamskg.gr</a>: same flat, same calendar, <b>10% lower price</b>.",
+  "Buchen Sie beim nächsten Mal direkt auf <a href=\"https://loamskg.gr/#book\" target=\"_blank\" rel=\"noopener\">loamskg.gr</a>: dieselbe Wohnung, derselbe Kalender, <b>10% günstiger</b>.",
+  "La prochaine fois, réservez en direct sur <a href=\"https://loamskg.gr/#book\" target=\"_blank\" rel=\"noopener\">loamskg.gr</a> : même logement, même calendrier, <b>10% moins cher</b>.",
+  "La prossima volta prenotate direttamente su <a href=\"https://loamskg.gr/#book\" target=\"_blank\" rel=\"noopener\">loamskg.gr</a>: stesso appartamento, stesso calendario, <b>prezzo più basso del 10%</b>."]
+]});
+
+/* Open in the guest's own language rather than always in Greek, and remember
+   the choice. A link may also name a tab: …/#video. */
+var CODES=["el","en","de","fr","it"];
+var lang=1, tab="arrive";
+(function(){
+  var saved=null; try{ saved=localStorage.getItem("loam_guide_lang"); }catch(e){}
+  var i=CODES.indexOf(saved||(navigator.language||"en").slice(0,2).toLowerCase());
+  if(i>=0) lang=i;
+  var h=location.hash.replace("#","");
+  if(DATA[h]) tab=h;
+})();
+
+function go(t,ic){
+  tab=t; render();
+  var c=document.querySelector('.card[data-ic="'+ic+'"]');
+  if(c){ c.scrollIntoView({block:"center"}); c.classList.add("flash"); setTimeout(function(){ c.classList.remove("flash"); },1600); }
+}
 
 function render(){
   var lg=document.getElementById("langs");
@@ -350,7 +406,7 @@ function render(){
     var b=document.createElement("button");
     b.textContent=code;
     b.className=(i===lang)?"on":"";
-    b.onclick=function(){lang=i;render();};
+    b.onclick=function(){lang=i;try{localStorage.setItem("loam_guide_lang",CODES[i]);}catch(e){}render();};
     lg.appendChild(b);
   });
 
@@ -363,14 +419,28 @@ function render(){
     var b=document.createElement("button");
     b.textContent=t[1][lang];
     b.className=(t[0]===tab)?"on":"";
-    b.onclick=function(){tab=t[0];render();window.scrollTo(0,0);};
+    b.onclick=function(){tab=t[0];try{history.replaceState(null,"","#"+tab);}catch(e){}render();window.scrollTo(0,0);};
     nav.appendChild(b);
   });
+
+  var quick=document.getElementById("quick");
+  quick.innerHTML="";
+  function qa(icon,label,href,fn){
+    var e=document.createElement(href?"a":"button");
+    if(href){ e.href=href; if(href.indexOf("http")===0){ e.target="_blank"; e.rel="noopener"; } }
+    else e.onclick=fn;
+    e.innerHTML='<span class="qi">'+icon+'</span>'+label;
+    quick.appendChild(e);
+  }
+  qa("📶",Q.wifi[lang],null,function(){ go("house","📶"); });
+  qa("📍",Q.map[lang],MAP);
+  qa("💬","WhatsApp","https://wa.me/"+PHONE.replace("+",""));
+  qa("📞",Q.call[lang],"tel:"+PHONE);
 
   var main=document.getElementById("main");
   main.innerHTML="";
   DATA[tab].forEach(function(card){
-    var el=document.createElement("div");el.className="card";
+    var el=document.createElement("div");el.className="card";el.setAttribute("data-ic",card.ic);
     var h='<div class="ct"><span class="ic">'+card.ic+'</span>'+card.t[lang]+'</div>';
     if(card.vid){
       h+='<div class="vwrap'+(card.portrait?" portrait":"")+'">'
@@ -383,6 +453,15 @@ function render(){
     else if(card.hasOwnProperty("vid")){ h+='<div class="vph">▶  '+(lang===0?"Το βίντεο θα προστεθεί σύντομα":"Video coming soon")+'</div>'; }
     if(card.b) card.b.forEach(function(item){ h+='<p>'+item[lang]+'</p>'; });
     el.innerHTML=h;
+    // typing a Wi-Fi password off a screen is where arrivals go wrong
+    if(card.ic==="📶"){
+      var cp=document.createElement("button");cp.className="copy";cp.textContent=Q.copy[lang];
+      cp.onclick=function(){
+        var done=function(){ cp.textContent=Q.copied[lang];cp.className="copy done"; };
+        if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(WIFI).then(done,function(){});
+      };
+      el.appendChild(cp);
+    }
     main.appendChild(el);
   });
 
