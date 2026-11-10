@@ -1,7 +1,7 @@
 import { todayISO } from '../lib/ical.mjs';
-import { ownerEvents } from '../lib/ownerfeed.mjs';
+import { calendarStays } from '../lib/ownerfeed.mjs';
 import { cleanGuest } from '../lib/ledger.mjs';
-import { readBlocks, writeBlocks, readCache, passwordOK, readFeedToken, rotateFeedToken } from '../lib/store.mjs';
+import { readBlocks, writeBlocks, readCache, readLedger, passwordOK, readFeedToken, rotateFeedToken } from '../lib/store.mjs';
 
 /* Admin CRUD for manually closed dates. Guarded by ADMIN_PASSWORD; the page
    that calls it also lives behind an unguessable URL, but the password is what
@@ -27,9 +27,10 @@ export default async (req) => {
     const blocks = await readBlocks();
     const cache = await readCache();
     // one entry per stay, so the month grid can mark each check-out on its own
-    // even when two guests of the same platform change over on one day
-    const stays = ownerEvents(blocks, cache?.ranges || [])
-      .map(({ source, start, end, title, closed }) => ({ source, start, end, title, closed: !!closed }));
+    // even when two guests of the same platform change over on one day.
+    // The calendar must still open if the books cannot be read.
+    const records = await readLedger().then(l => Object.values(l.records), () => []);
+    const stays = calendarStays(blocks, cache?.ranges || [], records, todayISO());
     return json({
       blocks,
       stays,

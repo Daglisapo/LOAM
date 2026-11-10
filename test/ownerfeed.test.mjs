@@ -1,4 +1,4 @@
-import { buildOwnerCalendar, ownerEvents } from '../netlify/lib/ownerfeed.mjs';
+import { buildOwnerCalendar, ownerEvents, calendarStays } from '../netlify/lib/ownerfeed.mjs';
 import { parseICS } from '../netlify/lib/ical.mjs';
 
 let pass = 0, fail = 0;
@@ -113,6 +113,36 @@ eq('dates survive a round trip through the reader',
   parseICS(ics).map(e => [e.start, e.end]), [['2026-12-10', '2026-12-14']]);
 eq('stays do not mark the owner busy', ics.includes('TRANSP:TRANSPARENT'), true);
 eq('uid is stable and not the public one', ics.includes('UID:b1-owner@loamskg.gr'), true);
+
+/* What the owner page draws */
+const feedNow = [
+  { source: 'airbnb', summary: 'Reserved', start: '2026-12-14', end: '2026-12-17' },
+  { source: 'booking', summary: 'CLOSED - Not available', start: '2026-12-20', end: '2026-12-24' },
+  { source: 'airbnb', summary: 'Airbnb (Not available)', start: '2026-11-11', end: '2026-11-12' },
+];
+const books = [
+  { key: 'airbnb:AAA', source: 'airbnb', start: '2026-12-14', end: '2026-12-17', status: 'ok', guest: { name: 'Guest A' } },
+  { key: 'booking@2026-12-20', source: 'booking', start: '2026-12-21', feedStart: '2026-12-20', end: '2026-12-24', status: 'ok', guest: { name: 'Guest B' } },
+  { key: 'booking:111', source: 'booking', start: '2026-10-07', end: '2026-10-12', status: 'ok', guest: { name: 'Past Guest' } },
+  { key: 'airbnb:CCC', source: 'airbnb', start: '2026-10-20', end: '2026-10-30', status: 'cancelled', guest: { name: 'Cancelled' } },
+  { key: 'booking:222', source: 'booking', start: '2027-01-05', end: '2027-01-08', status: 'ok', guest: { name: 'Not in feed' } },
+];
+const cs = calendarStays([direct], feedNow, books, '2026-11-11');
+const who = s => [s.source, s.start, s.guest];
+eq('platform stays take their guest from the books',
+  cs.filter(s => s.source === 'airbnb' && !s.closed).map(who), [['airbnb', '2026-12-14', 'Guest A']]);
+eq('a stay re-dated by hand is matched on its feed date',
+  cs.find(s => s.start === '2026-12-20').guest, 'Guest B');
+eq('a past stay the feeds have dropped comes from the books',
+  cs.filter(s => s.start < '2026-11-01').map(who), [['booking', '2026-10-07', 'Past Guest']]);
+eq('a cancelled stay does not', cs.some(s => s.guest === 'Cancelled'), false);
+eq('a future stay missing from the feed is not invented', cs.some(s => s.guest === 'Not in feed'), false);
+eq('a direct booking carries its name and block',
+  [cs.find(s => s.source === 'direct').guest, cs.find(s => s.source === 'direct').blockId], ['Γιώργος Νικολάου', 'b1']);
+eq('a closed date has no guest', cs.find(s => s.closed).guest, null);
+eq('dates closed by hand without a guest are not a stay',
+  calendarStays([{ id: 'm1', start: '2026-11-20', end: '2026-11-22', note: 'painting' }], [])[0].closed, true);
+eq('the calendar works without the books', calendarStays([direct], feedNow).length, 4);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

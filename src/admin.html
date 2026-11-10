@@ -121,6 +121,53 @@ tr.det .edit{padding:6px 0}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .preview{background:#FBF5E8;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0}
 .expgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+
+/* calendar tab: tools, today, timeline */
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.card.fold > h2{cursor:pointer;margin-bottom:0;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.card.fold > h2:after{content:"+";font-family:'Commissioner',system-ui,sans-serif;font-weight:400;font-size:24px;line-height:1;color:var(--ochre)}
+.card.fold.open > h2{margin-bottom:12px}
+.card.fold.open > h2:after{content:"–"}
+.card.fold:not(.open) > :not(h2){display:none}
+.nowline{font-size:16px;line-height:1.5}
+.nowline div + div{margin-top:2px}
+.nowline .free{color:#3F5F2C}
+.ag{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px;cursor:pointer}
+.ag:first-child{margin-top:12px}
+.ag:hover{background:#FBF5E8}
+.ag .when{font-weight:600;min-width:104px}
+.ag .who{flex:1;min-width:140px}
+.kind{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.kind.in{background:#E8F0DF;color:#3F5F2C}
+.kind.out{background:#F0E8D8;color:#4A4034}
+.agnote{font-size:12.5px;color:#8A3A3A;background:#FBF1F1;border:1px solid #E9C9C9;border-radius:8px;padding:6px 10px;margin:0 0 8px}
+.tl{overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.tlin{position:relative}
+.tlhead{display:flex}
+.tld{flex:none;text-align:center;font-size:11px;color:var(--mut);padding:4px 0 6px;border-left:1px solid var(--line);line-height:1.25;height:66px}
+.tld em{display:block;font-style:normal;font-weight:600;color:var(--ochre);height:14px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.tld b{display:block;font-size:15px;color:var(--ink);font-weight:600}
+.tld i{display:block;font-style:normal;font-size:10px;height:13px}
+.tld.we{background:#FAF3E3}
+.tld.today{background:#EFE3C8}
+.tld.today b{color:var(--ochre)}
+.tld.gone{opacity:.55}
+.tlrow{position:relative;border-top:1px solid var(--line);background:repeating-linear-gradient(90deg,transparent 0 43px,var(--line) 43px 44px)}
+.tlbar{position:absolute;height:28px;border-radius:14px;border:1px solid;font-size:12.5px;font-weight:600;color:var(--ink);padding:0 10px;line-height:26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;text-align:left;font-family:inherit}
+.tlbar:hover{filter:brightness(.96)}
+.tlbar.airbnb{background:#F2C8C8;border-color:#E5A9A9}
+.tlbar.booking{background:#C6D4EE;border-color:#A6BBE2}
+.tlbar.direct{background:#D6E7C8;border-color:#B5D2A0}
+.tlbar.closed{background:repeating-linear-gradient(45deg,#EFE7D7 0 5px,#E4D9C3 5px 10px);border-color:#D8CBB0;color:var(--mut);font-weight:500}
+.tlbar.on{outline:2px solid var(--ink);outline-offset:1px}
+.staybox{margin-top:14px;background:#FBF5E8;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.staybox .sname{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;margin:6px 0 2px}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.mhead h2{margin:0}
+.mnav{display:flex;gap:6px}
+.mnav button{padding:6px 14px;font-size:14px}
+.mnav button:hover{color:var(--ink);border-color:var(--tan,#B4915F)}
+.g div[data-k]{cursor:pointer}
 </style></head><body>
 
 <div class="wrap">
@@ -144,13 +191,41 @@ tr.det .edit{padding:6px 0}
 
     <div id="tab-cal">
 
+    <div class="tools">
+      <button id="newbook">+ Νέα κράτηση</button>
+      <button id="reload" class="ghost">↻ Ανανέωση</button>
+    </div>
+
     <div class="card">
-      <h2>Επόμενοι 6 μήνες</h2>
+      <h2>Σήμερα &amp; επόμενες μέρες</h2>
+      <div class="nowline" id="nowline"></div>
+      <div id="agenda"></div>
+      <p class="muted" id="freeruns"></p>
+    </div>
+
+    <div class="card">
+      <h2>Γραμμή χρόνου</h2>
+      <p class="muted" style="margin-top:-4px;margin-bottom:12px">Κάθε μπάρα είναι μία διαμονή, από το απόγευμα της άφιξης ως το πρωί της αναχώρησης. Πάτησέ τη για λεπτομέρειες.</p>
+      <div class="tl" id="tl"></div>
+      <div class="staybox" id="staybox" hidden></div>
+    </div>
+
+    <div class="card">
+      <div class="mhead">
+        <h2 id="mtitle">Μήνες</h2>
+        <div class="mnav">
+          <button id="mprev" class="ghost" aria-label="Προηγούμενοι μήνες">‹</button>
+          <button id="mnow" class="ghost">Σήμερα</button>
+          <button id="mnext" class="ghost" aria-label="Επόμενοι μήνες">›</button>
+        </div>
+      </div>
+      <p class="muted" style="margin:0 0 6px">Πάτησε την πρώτη και μετά την τελευταία νύχτα για να αλλάξεις τιμή ή να περάσεις κράτηση. Σε κλεισμένη μέρα βλέπεις ποιος μένει.</p>
       <div class="legend">
         <span><i style="background:#F2C8C8;border-color:#E5A9A9"></i>Airbnb</span>
         <span><i style="background:#C6D4EE;border-color:#A6BBE2"></i>Booking.com</span>
         <span><i style="background:#D6E7C8;border-color:#B5D2A0"></i>Απευθείας</span>
         <span><i style="background:#fff"></i>Ελεύθερο</span>
+        <span><i style="background:repeating-linear-gradient(45deg,#EFE7D7 0 3px,#E4D9C3 3px 6px)"></i>Κλειστό χωρίς επισκέπτη</span>
         <span><i style="background:linear-gradient(135deg,#E5A9A9 0 30%,rgba(36,30,23,.4) 30% 36%,#fff 36%)"></i>Αναχώρηση (έως 11:00)</span>
         <span><i style="background:repeating-linear-gradient(45deg,#D6E7C8 0 3px,#C6D4EE 3px 6px);outline:2px solid #B44;outline-offset:-2px"></i>Δύο κρατήσεις την ίδια νύχτα</span>
       </div>
@@ -164,13 +239,14 @@ tr.det .edit{padding:6px 0}
         <input id="selprice" type="number" min="1" step="1" placeholder="€ / νύχτα">
         <button id="selapply">Εφαρμογή τιμής</button>
         <button id="selbook" class="ghost">Κράτηση</button>
+        <button id="selopen" class="ghost" hidden>Ποιος μένει</button>
         <button id="selclear" class="ghost">Άκυρο</button>
         <div class="msg" id="selmsg" style="flex-basis:100%"></div>
       </div>
       <div class="src" id="src"></div>
     </div>
 
-    <div class="card" id="bookcard">
+    <div class="card fold" id="bookcard">
       <h2 id="booktitle">Νέα κράτηση / κλείσιμο ημερομηνιών</h2>
       <p class="muted" style="margin-top:-4px;margin-bottom:12px">
         Οι ημερομηνίες κλείνουν και στο feed που διαβάζουν Airbnb και Booking. Τα στοιχεία του πελάτη
@@ -225,7 +301,7 @@ tr.det .edit{padding:6px 0}
       <div class="muted" id="empty" hidden>Καμία απευθείας κράτηση ακόμα.</div>
     </div>
 
-    <div class="card">
+    <div class="card fold">
       <h2>Τιμές</h2>
       <p class="muted" style="margin-top:-4px;margin-bottom:12px">
         Καθαρά έσοδα ανά νύχτα για απευθείας κρατήσεις — χωρίς προμήθεια πλατφόρμας.
@@ -240,7 +316,7 @@ tr.det .edit{padding:6px 0}
       <div class="msg" id="rmsg"></div>
     </div>
 
-    <div class="card">
+    <div class="card fold">
       <h2>Εποχικές περίοδοι</h2>
       <p class="muted" style="margin-top:-4px;margin-bottom:12px">
         Διαφορετική τιμή σε συγκεκριμένες ημερομηνίες. Η «έως» είναι η <b>τελευταία νύχτα</b> που χρεώνεται με τη νέα τιμή.
@@ -258,7 +334,7 @@ tr.det .edit{padding:6px 0}
       <div class="muted" id="pempty" hidden>Καμία εποχική περίοδος — ισχύει παντού η βασική τιμή.</div>
     </div>
 
-    <div class="card">
+    <div class="card fold">
       <h2>Ημερολόγιο κινητού</h2>
       <p class="muted" style="margin-top:-4px;margin-bottom:10px">
         Όλες οι κρατήσεις στο ημερολόγιο του κινητού σου, μαζί με τα στοιχεία πελάτη για τις απευθείας.
@@ -277,7 +353,7 @@ tr.det .edit{padding:6px 0}
       <div class="msg" id="ownermsg"></div>
     </div>
 
-    <div class="card">
+    <div class="card fold">
       <h2>Feed για Airbnb &amp; Booking</h2>
       <p class="muted" style="margin-top:-4px">Αντίγραψέ το και κάν' το import στις δύο πλατφόρμες, ώστε οι απευθείας κρατήσεις να κλείνουν και εκεί.</p>
       <p style="margin-top:10px"><code id="icsurl"></code></p>
@@ -455,6 +531,9 @@ function load(){
     var bl = res.body;
     STAYS = bl.stays || [];
     PRICES = av.prices || {};
+    BLOCKS = bl.blocks || [];
+    drawToday();
+    drawTimeline();
     drawMonths();
     drawSources(av);
     drawRows(bl.blocks || []);
@@ -486,10 +565,10 @@ var COL = { airbnb: "#F2C8C8", booking: "#C6D4EE", direct: "#D6E7C8" };
 var EDGE = { airbnb: "#E5A9A9", booking: "#A6BBE2", direct: "#B5D2A0" };   // the cell borders, so the corner reads on white
 var NAME = { airbnb: "Airbnb", booking: "Booking.com", direct: "Απευθείας" };
 
-function stayIndex(last){
+function stayIndex(first, last){
   var night = {}, out = {};
   STAYS.forEach(function(s){
-    for (var d = s.start; d < s.end && d <= last; d = addDays(d, 1)) (night[d] = night[d] || []).push(s);
+    for (var d = s.start < first ? first : s.start; d < s.end && d <= last; d = addDays(d, 1)) (night[d] = night[d] || []).push(s);
     if (!s.closed) (out[s.end] = out[s.end] || []).push(s);
   });
   return { night: night, out: out };
@@ -507,6 +586,9 @@ function paintCell(cell, key, past, idx){
     var a = COL[night[0].source], b = COL[night[1].source];
     bg = "repeating-linear-gradient(45deg," + a + " 0 5px," + b + " 5px 10px)";
     cell.classList.add("clash");
+  } else if (night.length === 1 && night[0].closed){
+    // closed with nobody staying: hatched, so it is never mistaken for a guest
+    bg = "repeating-linear-gradient(45deg,#EFE7D7 0 5px,#E4D9C3 5px 10px)";
   } else if (night.length === 1){
     bg = COL[night[0].source];
     cell.classList.add(night[0].source);
@@ -524,12 +606,190 @@ function paintCell(cell, key, past, idx){
   if (tip.length) cell.title = tip.join("\n");
 }
 
+var MOFF = 0;      // months shown, counted from the current one
+var IDX = { night: {}, out: {} };
+
+/* ---- who is here, who comes, who goes ----
+   The first thing the owner needs each morning, before any grid. */
+function stayName(s){
+  if (s.guest) return s.guest;
+  if (s.source === "direct") return label(s).replace(/^Απευθείας · /, "") || "Κλειστό";
+  if (s.closed) return "Κλειστό στο Airbnb";
+  return "Χωρίς όνομα ακόμα";
+}
+function dayLabel(d, today){
+  if (d === today) return "Σήμερα";
+  if (d === addDays(today, 1)) return "Αύριο";
+  var p = d.split("-"), x = new Date(+p[0], +p[1] - 1, +p[2]);
+  return x.toLocaleDateString("el-GR", { weekday: "short", day: "numeric", month: "short" });
+}
+function srcBadge(s){ return el("span", { class: "badge " + s.source, text: NAME[s.source] }); }
+
+function drawToday(){
+  var today = iso(new Date());
+  var real = STAYS.filter(function(s){ return !s.closed; });
+  var now = document.getElementById("nowline");
+  now.innerHTML = "";
+  function line(text, cls){ now.appendChild(el("div", { class: cls || "" }, [text])); }
+
+  var leaving = real.filter(function(s){ return s.end === today; });
+  var arriving = real.filter(function(s){ return s.start === today; });
+  var staying = real.filter(function(s){ return s.start < today && today < s.end; });
+  leaving.forEach(function(s){ line("Φεύγει σήμερα έως τις 11:00: " + stayName(s) + " (" + NAME[s.source] + ")"); });
+  arriving.forEach(function(s){ line("Φτάνει σήμερα από τις 15:00: " + stayName(s) + " (" + NAME[s.source] + "), " + nights(s.start, s.end) + " νύχτες"); });
+  staying.forEach(function(s){ line("Μένει τώρα: " + stayName(s) + " (" + NAME[s.source] + "), έως " + dayLabel(s.end, today).replace("Αύριο", "αύριο")); });
+  if (!arriving.length && !staying.length){
+    var next = real.filter(function(s){ return s.start > today; })[0];
+    line("Απόψε το διαμέρισμα είναι ελεύθερο." + (next ? " Επόμενη άφιξη: " + dayLabel(next.start, today) + ", σε " + nights(today, next.start) + (nights(today, next.start) === 1 ? " μέρα." : " μέρες.") : ""), "free");
+  }
+
+  // the next two weeks, a line per arrival and departure
+  var host = document.getElementById("agenda");
+  host.innerHTML = "";
+  var until = addDays(today, 14), rows = 0;
+  for (var d = today; d <= until; d = addDays(d, 1)){
+    var outs = real.filter(function(s){ return s.end === d; });
+    var ins = real.filter(function(s){ return s.start === d; });
+    if (d === today){ outs = []; ins = []; }      // today is already said above
+    outs.forEach(function(s){ host.appendChild(agendaRow(d, today, "out", s)); rows++; });
+    ins.forEach(function(s){ host.appendChild(agendaRow(d, today, "in", s)); rows++; });
+    if (outs.length && ins.length) host.appendChild(el("div", { class: "agnote", text: "Αλλαγή επισκεπτών: καθάρισμα μεταξύ 11:00 και 15:00." }));
+  }
+  if (!rows) host.appendChild(el("p", { class: "muted", text: "Καμία άφιξη ή αναχώρηση τις επόμενες 14 μέρες." }));
+
+  // open nights are money: say where they are
+  var busy = {};
+  STAYS.forEach(function(s){ for (var x = s.start; x < s.end; x = addDays(x, 1)) busy[x] = 1; });
+  var runs = [], run = null;
+  for (var q = today; q < addDays(today, 42); q = addDays(q, 1)){
+    if (busy[q]){ run = null; continue; }
+    if (run) run.n++; else { run = { from: q, n: 1 }; runs.push(run); }
+  }
+  document.getElementById("freeruns").textContent = runs.length
+    ? "Κενές νύχτες στις επόμενες 6 εβδομάδες: " + runs.slice(0, 5).map(function(r){
+        return dmy(r.from).slice(0, 5) + (r.n > 1 ? "–" + dmy(addDays(r.from, r.n - 1)).slice(0, 5) : "") + " (" + r.n + ")";
+      }).join(" · ") + (runs.length > 5 ? " …" : "")
+    : "Καμία κενή νύχτα στις επόμενες 6 εβδομάδες.";
+}
+
+function agendaRow(d, today, kind, s){
+  var row = el("div", { class: "ag" }, [
+    el("span", { class: "when", text: dayLabel(d, today) }),
+    el("span", { class: "kind " + kind, text: kind === "in" ? "Άφιξη από 15:00" : "Αναχώρηση έως 11:00" }),
+    el("span", { class: "who" }, [stayName(s) + " "]),
+    el("span", { class: "muted", style: "margin:0", text: nights(s.start, s.end) + (nights(s.start, s.end) === 1 ? " νύχτα" : " νύχτες") }),
+  ]);
+  row.querySelector(".who").appendChild(srcBadge(s));
+  row.addEventListener("click", function(){ showStay(s); });
+  return row;
+}
+
+/* ---- timeline ----
+   One row, a column per day, a bar per stay. A stay starts in the afternoon
+   and ends in the morning, so its bar runs from the middle of one column to
+   the middle of another and a same-day changeover shows as two bars meeting. */
+var CW = 44, TL_BACK = 3, TL_DAYS = 48;
+
+function drawTimeline(){
+  var host = document.getElementById("tl");
+  host.innerHTML = "";
+  var today = iso(new Date()), t0 = addDays(today, -TL_BACK);
+  var inner = el("div", { class: "tlin", style: "width:" + (TL_DAYS * CW) + "px" });
+  var head = el("div", { class: "tlhead" });
+  for (var i = 0; i < TL_DAYS; i++){
+    var d = addDays(t0, i), p = d.split("-"), x = new Date(+p[0], +p[1] - 1, +p[2]);
+    var wd = x.getDay();
+    head.appendChild(el("div", {
+      class: "tld" + (wd === 5 || wd === 6 ? " we" : "") + (d === today ? " today" : "") + (d < today ? " gone" : ""),
+      style: "width:" + CW + "px",
+    }, [
+      el("em", { text: i === 0 || +p[2] === 1 ? MON[+p[1] - 1] : "" }),
+      el("span", { text: ["Κυ", "Δε", "Τρ", "Τε", "Πε", "Πα", "Σα"][wd] }),
+      el("b", { text: String(+p[2]) }),
+      el("i", { text: PRICES[d] != null ? PRICES[d] + "€" : "" }),
+    ]));
+  }
+  inner.appendChild(head);
+
+  // two stays on the same nights go on separate lanes, so neither hides the other
+  var lanes = [], bars = [];
+  STAYS.forEach(function(s){
+    var a = nights(t0, s.start), b = nights(t0, s.end);
+    if (b <= 0 || a >= TL_DAYS) return;
+    var lane = 0;
+    while (lanes[lane] && lanes[lane] > a) lane++;
+    lanes[lane] = b;
+    bars.push({ s: s, a: a, b: b, lane: lane });
+  });
+  var row = el("div", { class: "tlrow", style: "height:" + (Math.max(1, lanes.length) * 34 + 8) + "px" });
+  bars.forEach(function(x){
+    var left = x.a < 0 ? 0 : (x.a + 0.5) * CW + 2;
+    var right = x.b >= TL_DAYS ? TL_DAYS * CW : (x.b + 0.5) * CW - 2;
+    var n = nights(x.s.start, x.s.end);
+    var bar = el("button", {
+      type: "button",
+      class: "tlbar " + (x.s.closed ? "closed" : x.s.source),
+      style: "left:" + left + "px;width:" + Math.max(18, right - left) + "px;top:" + (x.lane * 34 + 6) + "px",
+      title: stayName(x.s) + " · " + NAME[x.s.source] + " · " + dmy(x.s.start) + " → " + dmy(x.s.end),
+      text: stayName(x.s) + " · " + n + "ν",
+    });
+    bar.addEventListener("click", function(){
+      [].forEach.call(row.querySelectorAll(".on"), function(o){ o.classList.remove("on"); });
+      bar.classList.add("on");
+      showStay(x.s);
+    });
+    row.appendChild(bar);
+  });
+  inner.appendChild(row);
+  host.appendChild(inner);
+}
+
+/* ---- one stay, opened from the agenda, the timeline or a month cell ---- */
+function showStay(s){
+  var box = document.getElementById("staybox");
+  box.innerHTML = "";
+  var n = nights(s.start, s.end);
+  box.appendChild(srcBadge(s));
+  box.appendChild(el("div", { class: "sname", text: stayName(s) }));
+  box.appendChild(el("div", { text: dmy(s.start) + " → " + dmy(s.end) + " · " + n + (n === 1 ? " νύχτα" : " νύχτες") +
+    " · άφιξη από 15:00, αναχώρηση έως 11:00" }));
+  var actions = el("div", { class: "actions" });
+  if (s.source === "direct" && s.blockId){
+    var b = BLOCKS.find(function(x){ return x.id === s.blockId; });
+    if (b){
+      var g = b.guest || {};
+      var bits = [];
+      if (g.phone) bits.push(g.phone);
+      if (g.adults != null || g.children != null) bits.push(people(g) + " άτομα");
+      if (g.total != null) bits.push("σύνολο " + euro(g.total) + (g.deposit ? ", προκαταβολή " + euro(g.deposit) : ""));
+      if (b.note) bits.push(b.note);
+      if (bits.length) box.appendChild(el("div", { class: "muted", text: bits.join(" · ") }));
+      actions.appendChild(el("button", { text: "Επεξεργασία", onclick: function(){ startEdit(b); } }));
+    }
+  } else if (s.closed){
+    box.appendChild(el("div", { class: "muted", text: "Το Airbnb έχει κλειστές αυτές τις μέρες. Δεν είναι κράτηση." }));
+  } else if (s.key){
+    actions.appendChild(el("button", { text: "Στοιχεία & ποσά", onclick: function(){
+      OPEN = s.key; showTab("fin");
+      setTimeout(function(){ var r = document.querySelector("#rrows tr.det"); if (r) r.scrollIntoView({ block: "center" }); }, 1200);
+    } }));
+  } else {
+    box.appendChild(el("div", { class: "muted", text: "Η κράτηση θα εμφανιστεί στα «Κρατήσεις & Οικονομικά» σε λίγα λεπτά." }));
+  }
+  actions.appendChild(el("button", { class: "ghost", text: "Κλείσιμο", onclick: function(){ box.hidden = true; } }));
+  box.appendChild(actions);
+  box.hidden = false;
+  box.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
 function drawMonths(){
   var host = document.getElementById("months");
   host.innerHTML = "";
   var today = iso(new Date());
-  var base = new Date(); base.setDate(1);
-  var idx = stayIndex(addDays(today, 200));
+  var base = new Date(); base.setDate(1); base.setMonth(base.getMonth() + MOFF);
+  var from = new Date(base.getFullYear(), base.getMonth(), 1), to = new Date(base.getFullYear(), base.getMonth() + 6, 0);
+  var idx = IDX = stayIndex(iso(from), iso(to));
+  document.getElementById("mtitle").textContent = MON[from.getMonth()] + " " + from.getFullYear() + " – " + MON[to.getMonth()] + " " + to.getFullYear();
 
   for (var m = 0; m < 6; m++){
     var first = new Date(base.getFullYear(), base.getMonth() + m, 1);
@@ -554,6 +814,7 @@ function drawMonths(){
       var cell = document.createElement("div");
       cell.className = cls.join(" ");
       paintCell(cell, key, key < today, idx);
+      cell.dataset.k = key;
       if (key >= today) cell.dataset.d = key;
       var n = document.createElement("span"); n.className = "n"; n.textContent = d;
       cell.appendChild(n);
@@ -685,7 +946,9 @@ function startEdit(b){
   document.getElementById("add").textContent = "Αποθήκευση αλλαγών";
   document.getElementById("addcancel").hidden = false;
   clear(document.getElementById("addmsg"));
-  document.getElementById("bookcard").scrollIntoView({ behavior: "smooth", block: "start" });
+  // the form may be folded away, or the owner may be on the other tab
+  if (document.getElementById("tab-cal").hidden) showTab("cal");
+  openBooking();
 }
 
 document.getElementById("addcancel").addEventListener("click", function(){
@@ -897,6 +1160,11 @@ function paintSel(){
     nights + (nights === 1 ? " νύχτα · " : " νύχτες · ") + now;
 
   if (seen.length === 1) document.getElementById("selprice").placeholder = seen[0] + " €";
+  var here = (IDX.night[r.from] || []).concat(IDX.out[r.from] || []);
+  var open = document.getElementById("selopen");
+  open.hidden = !here.length;
+  open.onclick = here.length ? function(){ showStay(here[0]); } : null;
+  if (here.length) document.getElementById("selsub").textContent += " · " + here.map(stayName).join(", ");
   bar.className = "selbar on";
 }
 
@@ -904,11 +1172,41 @@ function clearSel(){ SEL.a = SEL.b = null; paintSel(); clear(document.getElement
 
 document.getElementById("months").addEventListener("pointerdown", function(e){
   var c = e.target.closest("div[data-d]");
-  if (!c) return;
+  if (!c){
+    // a past day cannot be priced or booked, but it can still say who stayed
+    var past = e.target.closest("div[data-k]");
+    var was = past ? (IDX.night[past.dataset.k] || []).concat(IDX.out[past.dataset.k] || []) : [];
+    if (was.length) showStay(was[0]);
+    return;
+  }
   e.preventDefault();
-  SEL.a = SEL.b = c.dataset.d;
-  SEL.dragging = true;
+  // A finger cannot drag across cells the way a mouse can, so a second tap on
+  // another day closes the range the first tap opened.
+  if (SEL.a && SEL.a === SEL.b && c.dataset.d !== SEL.a) SEL.b = c.dataset.d;
+  else { SEL.a = SEL.b = c.dataset.d; SEL.dragging = true; }
   paintSel();
+});
+
+document.getElementById("mprev").addEventListener("click", function(){ MOFF -= 3; clearSel(); drawMonths(); });
+document.getElementById("mnext").addEventListener("click", function(){ MOFF += 3; clearSel(); drawMonths(); });
+document.getElementById("mnow").addEventListener("click", function(){ MOFF = 0; clearSel(); drawMonths(); });
+
+/* cards that are opened a few times a year stay shut until asked for */
+[].forEach.call(document.querySelectorAll(".card.fold > h2"), function(h){
+  h.addEventListener("click", function(){ h.parentNode.classList.toggle("open"); });
+});
+function openBooking(){
+  var card = document.getElementById("bookcard");
+  card.classList.add("open");
+  card.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+document.getElementById("newbook").addEventListener("click", function(){
+  resetForm(); openBooking();
+  document.getElementById("s").focus({ preventScroll: true });
+});
+document.getElementById("reload").addEventListener("click", function(){
+  document.getElementById("status").textContent = "Ανανέωση…";
+  load();
 });
 document.getElementById("months").addEventListener("pointerover", function(e){
   if (!SEL.dragging) return;
@@ -928,7 +1226,7 @@ document.getElementById("selbook").addEventListener("click", function(){
   document.getElementById("s").value = r.from;
   document.getElementById("e").value = addDays(r.to, 1);
   clearSel();
-  document.getElementById("bookcard").scrollIntoView({ behavior: "smooth", block: "start" });
+  openBooking();
   document.getElementById("gname").focus({ preventScroll: true });
 });
 

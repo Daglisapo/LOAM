@@ -80,6 +80,39 @@ export function ownerEvents(blocks, ranges) {
   return events.sort((a, b) => a.start.localeCompare(b.start));
 }
 
+/**
+ * The stays the owner page draws. The feeds say when; the books say who.
+ *
+ * Each platform stay takes its guest's name from the ledger record that began
+ * on the same day. Stays that have already started are added from the ledger
+ * when no feed carries them any more: platforms drop a stay soon after it
+ * ends, and a calendar that forgets last week is no use for looking back.
+ * Future stays come from the feeds alone, so a booking the platform has
+ * cancelled cannot linger here.
+ */
+export function calendarStays(blocks, ranges, records = [], today = '') {
+  const book = records.filter(r => r.source === 'airbnb' || r.source === 'booking');
+  const begins = (r, start) => r.start === start || r.feedStart === start;
+
+  const stays = ownerEvents(blocks, ranges).map((e) => {
+    if (e.source === 'direct') {
+      const b = blocks.find(x => x.id === e.uid);
+      // dates closed by hand with no guest and no money are maintenance, not a stay
+      const closed = !(b?.guest?.name || b?.guest?.total != null);
+      return { source: 'direct', start: e.start, end: e.end, title: e.title, closed, guest: b?.guest?.name || null, blockId: e.uid };
+    }
+    const rec = e.closed ? null : book.find(r => r.source === e.source && begins(r, e.start));
+    return { source: e.source, start: e.start, end: e.end, title: e.title, closed: !!e.closed, guest: rec?.guest?.name || null, key: rec?.key || null };
+  });
+
+  for (const r of book) {
+    if (r.status !== 'ok' || r.ignored || !(r.start < today)) continue;
+    if (stays.some(s => s.source === r.source && !s.closed && begins(r, s.start))) continue;
+    stays.push({ source: r.source, start: r.start, end: r.end, title: PLATFORM[r.source], closed: false, guest: r.guest?.name || null, key: r.key });
+  }
+  return stays.sort((a, b) => a.start.localeCompare(b.start));
+}
+
 export function buildOwnerCalendar(blocks, ranges, now = new Date()) {
   const dtstamp = stamp(now);
   const lines = [
