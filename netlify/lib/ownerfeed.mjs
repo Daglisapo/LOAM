@@ -13,18 +13,23 @@ import { esc, fold, nightsOf, stamp, toRanges } from './ical.mjs';
    apartment. Those only fill nights that no stay claims. */
 
 const money = n => n.toLocaleString('el-GR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' €';
+const people = (g) => {
+  const count = (g.adults || 0) + (g.children || 0);
+  return count ? ` · ${count} ${count === 1 ? 'άτομο' : 'άτομα'}` : '';
+};
+const lines = rows => rows
+  .filter(([, v]) => v != null && v !== '')
+  .map(([k, v]) => `${k}: ${v}`)
+  .join('\n');
 
 function directTitle(b) {
   const g = b.guest || {};
-  const who = String(g.name || b.note || 'Κλειστό').slice(0, 60);
-  const count = (g.adults || 0) + (g.children || 0);
-  if (!count) return `LOAM · ${who}`;
-  return `LOAM · ${who} · ${count} ${count === 1 ? 'άτομο' : 'άτομα'}`;
+  return `LOAM · ${String(g.name || b.note || 'Κλειστό').slice(0, 60)}${people(g)}`;
 }
 
 function directDetails(b) {
   const g = b.guest || {};
-  return [
+  return lines([
     ['Τηλέφωνο', g.phone],
     ['Email', g.email],
     ['Χώρα', g.country],
@@ -39,10 +44,36 @@ function directDetails(b) {
     ['Υπόλοιπο', g.total != null ? money(g.total - (g.deposit || 0)) : null],
     ['Πληρωμή', g.payment],
     ['Σημειώσεις', b.note],
-  ]
-    .filter(([, v]) => v != null && v !== '')
-    .map(([k, v]) => `${k}: ${v}`)
-    .join('\n');
+  ]);
+}
+
+const PLATFORM_NAME = { airbnb: 'Airbnb', booking: 'Booking.com' };
+
+/* A platform stay as the books know it: the name and details typed in or
+   imported, with money already net of any refund. */
+function platformTitle(v, source) {
+  const g = v.guest || {};
+  if (!g.name) return `LOAM · ${PLATFORM_NAME[source]}`;
+  return `LOAM · ${String(g.name).slice(0, 60)}${people(g)} · ${PLATFORM_NAME[source]}`;
+}
+
+function platformDetails(v, source) {
+  const g = v.guest || {};
+  return lines([
+    ['Πλατφόρμα', PLATFORM_NAME[source] + (v.code ? ` · κωδικός ${v.code}` : '')],
+    ['Τηλέφωνο', g.phone || (g.phone4 ? `…${g.phone4} (τα 4 τελευταία ψηφία)` : null)],
+    ['Email', g.email],
+    ['Χώρα', g.country],
+    ['Ενήλικες', g.adults],
+    ['Παιδιά', g.children],
+    ['ΑΦΜ', g.afm],
+    ['Ταυτότητα / διαβατήριο', g.idDoc],
+    ['Μικτά', v.gross != null ? money(v.gross) : null],
+    ['Προμήθεια', v.commission ? money(v.commission) : null],
+    ['Καθαρά', v.net != null ? money(v.net) : null],
+    ['Σημειώσεις', v.notes],
+    ['Κράτηση', source === 'airbnb' && v.code ? `https://www.airbnb.com/hosting/reservations/details/${v.code}` : null],
+  ]);
 }
 
 // Booking's export says "CLOSED - Not available" for a guest and for a closed
@@ -113,9 +144,39 @@ export function calendarStays(blocks, ranges, records = [], today = '') {
   return stays.sort((a, b) => a.start.localeCompare(b.start));
 }
 
-export function buildOwnerCalendar(blocks, ranges, now = new Date()) {
+/**
+ * The phone calendar's events: the feeds' stays, named from the books.
+ *
+ * `books` is the ledger's view of each stay. A platform stay takes its title
+ * and details from the entry that began on the same day, as the owner page
+ * does; a past stay the feeds have dropped stays on the phone from the books,
+ * under the same UID it had while the feed carried it, so it is updated
+ * rather than duplicated.
+ */
+export function phoneEvents(blocks, ranges, books = [], today = '') {
+  const platform = books.filter(v => v.source === 'airbnb' || v.source === 'booking');
+  const begins = (v, start) => v.start === start || v.feedStart === start;
+
+  const events = ownerEvents(blocks, ranges).map((e) => {
+    if (e.source === 'direct' || e.closed) return e;
+    const v = platform.find(x => x.source === e.source && begins(x, e.start));
+    return v ? { ...e, title: platformTitle(v, e.source), description: platformDetails(v, e.source) } : e;
+  });
+
+  for (const v of platform) {
+    if (v.status !== 'ok' || v.ignored || !(v.start < today)) continue;
+    if (events.some(e => e.source === v.source && !e.closed && begins(v, e.start))) continue;
+    events.push({
+      uid: `${v.source}-${v.feedStart || v.start}`, source: v.source, start: v.start, end: v.end,
+      title: platformTitle(v, v.source), description: platformDetails(v, v.source),
+    });
+  }
+  return events.sort((a, b) => a.start.localeCompare(b.start));
+}
+
+export function buildOwnerCalendar(blocks, ranges, now = new Date(), books = [], today = '') {
   const dtstamp = stamp(now);
-  const lines = [
+  const out = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//LOAM Thessaloniki//Owner calendar//EL',
@@ -126,8 +187,8 @@ export function buildOwnerCalendar(blocks, ranges, now = new Date()) {
     'X-PUBLISHED-TTL:PT1H',
   ];
 
-  for (const e of ownerEvents(blocks, ranges)) {
-    lines.push(
+  for (const e of phoneEvents(blocks, ranges, books, today)) {
+    out.push(
       'BEGIN:VEVENT',
       `UID:${e.uid}-owner@loamskg.gr`,
       `DTSTAMP:${dtstamp}`,
@@ -135,11 +196,11 @@ export function buildOwnerCalendar(blocks, ranges, now = new Date()) {
       `DTEND;VALUE=DATE:${e.end.replace(/-/g, '')}`,
       `SUMMARY:${esc(e.title)}`,
     );
-    if (e.description) lines.push(`DESCRIPTION:${esc(e.description)}`);
+    if (e.description) out.push(`DESCRIPTION:${esc(e.description)}`);
     // a guest in the apartment should not mark the owner as busy
-    lines.push('TRANSP:TRANSPARENT', 'END:VEVENT');
+    out.push('TRANSP:TRANSPARENT', 'END:VEVENT');
   }
-  lines.push('END:VCALENDAR');
+  out.push('END:VCALENDAR');
 
-  return lines.map(fold).join('\r\n') + '\r\n';
+  return out.map(fold).join('\r\n') + '\r\n';
 }

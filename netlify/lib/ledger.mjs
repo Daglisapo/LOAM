@@ -394,6 +394,7 @@ export function ledgerView(ledger, blocks) {
     const m = r.money;
     out.push({
       key: r.key, source: r.source === 'direct-import' ? 'direct' : r.source, code: r.code || null,
+      feedStart: r.feedStart || null,
       start: r.start, end: r.end, nights: nightsBetween(r.start, r.end),
       status: r.status, ignored: !!r.ignored, origin: r.origin,
       guest: r.guest || {}, notes: r.notes || '', declared: !!r.declared,

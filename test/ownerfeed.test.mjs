@@ -1,4 +1,4 @@
-import { buildOwnerCalendar, ownerEvents, calendarStays } from '../netlify/lib/ownerfeed.mjs';
+import { buildOwnerCalendar, ownerEvents, calendarStays, phoneEvents } from '../netlify/lib/ownerfeed.mjs';
 import { parseICS } from '../netlify/lib/ical.mjs';
 
 let pass = 0, fail = 0;
@@ -143,6 +143,39 @@ eq('a closed date has no guest', cs.find(s => s.closed).guest, null);
 eq('dates closed by hand without a guest are not a stay',
   calendarStays([{ id: 'm1', start: '2026-11-20', end: '2026-11-22', note: 'painting' }], [])[0].closed, true);
 eq('the calendar works without the books', calendarStays([direct], feedNow).length, 4);
+
+/* The phone calendar names platform stays from the books */
+const view = [
+  { key: 'airbnb:HMAAA', source: 'airbnb', code: 'HMAAA', start: '2026-12-14', end: '2026-12-17', status: 'ok', ignored: false,
+    guest: { name: 'Guest A', adults: 2, children: 1, phone4: '4321', country: 'Ελλάδα' }, gross: 168, commission: 32.29, net: 135.71, notes: 'κούνια μωρού' },
+  { key: 'booking@2026-12-20', source: 'booking', code: '555', start: '2026-12-21', feedStart: '2026-12-20', end: '2026-12-24', status: 'ok', ignored: false,
+    guest: { name: 'Guest B', adults: 2, phone: '+31 6 0000', afm: '094014201' }, gross: 270.8, commission: 44.68, net: 226.12, notes: '' },
+  { key: 'booking:111', source: 'booking', code: '111', start: '2026-10-07', end: '2026-10-12', status: 'ok', ignored: false,
+    guest: { name: 'Past Guest', adults: 2 }, gross: 384, commission: 63.36, net: 320.64, notes: '' },
+  { key: 'airbnb:CCC', source: 'airbnb', code: 'CCC', start: '2026-10-20', end: '2026-10-30', status: 'cancelled', ignored: false,
+    guest: { name: 'Cancelled' }, gross: 220.42, commission: 148.42, net: 72, notes: '' },
+];
+const pe = phoneEvents([direct], feedNow, view, '2026-11-16');
+const byStart = d => pe.find(e => e.start === d);
+eq('an Airbnb stay is named, with party size and platform', byStart('2026-12-14').title, 'LOAM · Guest A · 3 άτομα · Airbnb');
+eq('its details come from the books',
+  ['Πλατφόρμα: Airbnb · κωδικός HMAAA', 'Τηλέφωνο: …4321', 'Καθαρά: 135,71 €', 'Σημειώσεις: κούνια μωρού',
+   'Κράτηση: https://www.airbnb.com/hosting/reservations/details/HMAAA'].every(x => byStart('2026-12-14').description.includes(x)), true);
+eq('a re-dated Booking stay is found on its feed date and keeps its UID',
+  [byStart('2026-12-20').title, byStart('2026-12-20').uid], ['LOAM · Guest B · 2 άτομα · Booking.com', 'booking-2026-12-20']);
+eq('Booking details include the tax number', byStart('2026-12-20').description.includes('ΑΦΜ: 094014201'), true);
+eq('a past stay the feeds dropped stays on the phone', [byStart('2026-10-07').title, byStart('2026-10-07').uid],
+  ['LOAM · Past Guest · 2 άτομα · Booking.com', 'booking-2026-10-07']);
+eq('a cancelled stay is not put back', pe.some(e => e.title.includes('Cancelled')), false);
+eq('a direct booking is unchanged', byStart('2026-12-10').title, 'LOAM · Γιώργος Νικολάου · 3 άτομα');
+eq('a closed Airbnb date is unchanged', pe.find(e => e.closed).title, 'LOAM · Airbnb (κλειστό)');
+eq('a stay the books do not know keeps the plain title',
+  phoneEvents([], [{ source: 'booking', summary: 'CLOSED', start: '2027-02-11', end: '2027-02-14' }], view, '2026-11-16')
+    .find(e => e.start === '2027-02-11').title, 'LOAM · Booking.com');
+const ics2 = buildOwnerCalendar([direct], feedNow, new Date('2026-11-16T10:00:00Z'), view, '2026-11-16');
+eq('the feed carries the names', ics2.replace(/\r\n /g, '').includes('SUMMARY:LOAM · Guest A · 3 άτομα · Airbnb'), true);
+eq('without the books the feed is as before',
+  buildOwnerCalendar([direct], feedNow, new Date('2026-11-16T10:00:00Z')).includes('SUMMARY:LOAM · Airbnb\r\n'), true);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

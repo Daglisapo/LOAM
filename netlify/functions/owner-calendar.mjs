@@ -1,7 +1,10 @@
+import { todayISO } from '../lib/ical.mjs';
+import { ledgerView } from '../lib/ledger.mjs';
 import { buildOwnerCalendar } from '../lib/ownerfeed.mjs';
-import { readBlocks, readCache, readFeedToken, sameSecret } from '../lib/store.mjs';
+import { readBlocks, readCache, readLedger, readFeedToken, sameSecret } from '../lib/store.mjs';
 
-/* The owner's private calendar, with guest details on direct bookings.
+/* The owner's private calendar, with guest details on every stay: direct
+   bookings from the calendar, Airbnb and Booking stays from the books.
 
    A calendar app cannot send a header, so unlike the rest of the admin API the
    secret has to travel in the URL. That is why this is its own random token and
@@ -20,7 +23,11 @@ export default async (req) => {
     return new Response('feeds unavailable', { status: 503, headers: { 'Retry-After': '300' } });
   }
 
-  return new Response(buildOwnerCalendar(await readBlocks(), cache.ranges), {
+  // The books only add names and details. If they cannot be read, the stays
+  // still go out, unnamed, as they did before.
+  const books = await readLedger().then(l => ledgerView(l, []), () => []);
+
+  return new Response(buildOwnerCalendar(await readBlocks(), cache.ranges, new Date(), books, todayISO()), {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
       'Content-Disposition': 'inline; filename="loam-owner.ics"',
